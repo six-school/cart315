@@ -1,0 +1,63 @@
+name: Build and deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@ac5bf11548bf5e19b8aadb8182072616590fa4a6
+        with:
+          run_install: false
+      - uses: actions/setup-node@7
+        with:
+          node-version-file: ".node-version"
+          cache: "pnpm"
+
+      - name: Download Usagi and build
+        shell: bash
+        run: |
+          set -euo pipefail
+          USAGI_VERSION="$(cat ./.usagi-version)"
+
+          url="https://github.com/brettchalupa/usagi/releases/download/v$USAGI_VERSION/usagi-$USAGI_VERSION-linux-x86_64.tar.gz"
+          sha="a2fc30b6e83f83fd3cd5661c168226f6eab2f3b446f33ccb7b6592bd15237250"
+          curl --fail --location --silent --show-error "$url" -o usagi.tar.gz
+
+          actual="$(sha256sum "$file" | cut -d' ' -f1)"
+          if [[ "$actual" != "$expected" ]]; then
+            echo "SHA-256 mismatch!"
+            echo "Expected: $expected"
+            echo "Actual:   $actual"
+            exit 1
+          fi
+
+          mkdir -p bin
+          tar -xzf "usagi-$USAGI_VERSION-linux-x86_64.tar.gz" -O ./usagi > bin/usagi
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: |
+          cd export
+          unzip -q web.zip -d _site
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./_site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

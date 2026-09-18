@@ -3,10 +3,10 @@
   "private": "true",
   "version": "1.0.0",
   "scripts": {
-    "build": "tstl",
     "dev": "run-p -l dev:*",
     "dev:tstl": "tstl --watch",
     "dev:usagi": "./bin/usagi dev game",
+    "build": "tstl && ./bin/usagi export --target web --output export/web.zip game",
     "test": "run-p -cl test:*",
     "test:ts": "tsc --pretty --noEmit",
     "test:eslint": "eslint --color --max-warnings=0 '{src,scripts}/**/*'",

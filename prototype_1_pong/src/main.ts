@@ -31,18 +31,14 @@ function _init() {
     paddle2Y: usagi.GAME_H / 2 - paddleHeight / 2,
     ballX: usagi.GAME_W / 2 - ballSize / 2,
     ballY: usagi.GAME_H / 2 - ballSize / 2,
-    ballAngle: 0, // TODO
+    ballAngle: 0, // TODO: more interesting initial angle?
     ballSpeed: 120,
     p1Score: 0,
     p2Score: 0,
   };
 }
 
-let t = 0;
-
 function _update(dt: number) {
-  t += dt;
-
   const { ballAngle, ballSpeed } = State;
 
   if (input.key_held(input.KEY_W)) State.paddle1Y -= paddleSpeed * dt;

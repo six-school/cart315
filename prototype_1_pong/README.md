@@ -11,7 +11,9 @@ Once you're set, open the directory in a terminal and run:
 ```sh
 corepack enable # enables use of the pnpm package manager for Node
 pnpm install
-pnpm build # compile to lua once, so usagi picks up the files
+pnpm tstl # compile to lua once to "warm up" so that usagi picks up the files
 ```
 
 From now on, you should be able to run `pnpm dev` to spin up the compiler and game engine in parallel. The main file is [`src/main.ts`](./src/main.ts). You can tweak it with the game open and changes will be hot-reloaded instantly. You may need to `F5` to reset the game state if things get funky.
+
+To build to web, run `pnpm build`.
