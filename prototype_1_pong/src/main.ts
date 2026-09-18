@@ -21,7 +21,7 @@ const borderSize = 3;
 const textScale = 2;
 
 function _config() {
-  return { name: "Game", game_id: "com.usagiengine.SIX_PONG" };
+  return { name: "pong", game_id: "com.usagiengine.SIX_PONG" };
 }
 
 // F5 to reset
@@ -101,10 +101,11 @@ function bounceOffPaddles() {
       { x: paddleOffsetFromEdge, y: State.paddle1Y, w: paddleWidth, h: paddleHeight },
     )
   ) {
-    const ballDistanceFromPaddleCenter =
-      ((State.paddle1Y + paddleHeight / 2 - State.ballY + ballSize / 2) / (paddleHeight / 2)) * -1;
+    const ballYPaddleYDelta =
+      (State.paddle1Y + paddleHeight / 2 - State.ballY + ballSize / 2) / (paddleHeight / 2);
 
-    State.ballAngle = ballDistanceFromPaddleCenter * maxBounceAngle;
+    State.ballAngle = util.clamp(ballYPaddleYDelta, -1, 1) * -1 * maxBounceAngle;
+    State.ballX = paddleOffsetFromEdge + paddleWidth;
     // TODO: bounce paddle sound
   }
 
@@ -116,10 +117,11 @@ function bounceOffPaddles() {
       { x: usagi.GAME_W - paddleOffsetFromEdge, y: State.paddle2Y, w: paddleWidth, h: paddleHeight }
     )
   ) {
-    const ballDistanceFromPaddleCenter =
-      ((State.paddle2Y + paddleHeight / 2 - State.ballY + ballSize / 2) / (paddleHeight / 2)) * -1;
+    const ballYPaddleYDelta =
+      (State.paddle2Y + paddleHeight / 2 - State.ballY + ballSize / 2) / (paddleHeight / 2);
 
-    State.ballAngle = math.pi - ballDistanceFromPaddleCenter * maxBounceAngle;
+    State.ballAngle = math.pi - util.clamp(ballYPaddleYDelta, -1, 1) * -1 * maxBounceAngle;
+    State.ballX = usagi.GAME_W - paddleOffsetFromEdge - ballSize;
     // TODO: bounce paddle sound
   }
 }
@@ -134,20 +136,18 @@ function _draw(_dt: number) {
     gfx.rect_fill(usagi.GAME_W / 2 - borderSize / 2, i, borderSize, borderSize, gfx.COLOR_WHITE);
   }
 
-  // draw score
-  const [p1ScoreWidth] = usagi.measure_text(p1Score.toString());
-  // prettier-ignore
-  gfx.text_ex(p1Score.toString(), usagi.GAME_W / 2 - p1ScoreWidth * textScale - 10, 10, textScale, 0, gfx.COLOR_WHITE, 1);
-  gfx.text_ex(p2Score.toString(), usagi.GAME_W / 2 + 10, 10, textScale, 0, gfx.COLOR_WHITE, 1);
-
+  // draw ball
   gfx.rect_fill(ballX, ballY, ballSize, ballSize, gfx.COLOR_WHITE);
 
-  gfx.rect_fill(paddleOffsetFromEdge, paddle1Y, paddleWidth, paddleHeight, gfx.COLOR_WHITE);
-  gfx.rect_fill(
-    usagi.GAME_W - paddleOffsetFromEdge,
-    paddle2Y,
-    paddleWidth,
-    paddleHeight,
-    gfx.COLOR_WHITE,
-  );
+  // prettier-ignore
+  {
+    // draw score
+    const [p1ScoreWidth] = usagi.measure_text(p1Score.toString());
+    gfx.text_ex(p1Score.toString(), usagi.GAME_W / 2 - p1ScoreWidth * textScale - 10, 10, textScale, 0, gfx.COLOR_WHITE, 1);
+    gfx.text_ex(p2Score.toString(), usagi.GAME_W / 2 + 10, 10, textScale, 0, gfx.COLOR_WHITE, 1);
+
+    // draw paddles
+    gfx.rect_fill(paddleOffsetFromEdge, paddle1Y, paddleWidth, paddleHeight, gfx.COLOR_WHITE);
+    gfx.rect_fill(usagi.GAME_W - paddleOffsetFromEdge, paddle2Y, paddleWidth, paddleHeight, gfx.COLOR_WHITE);
+  }
 }
