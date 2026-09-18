@@ -1,0 +1,23 @@
+{
+  // "$schema": "https://raw.githubusercontent.com/TypeScriptToLua/TypeScriptToLua/master/tsconfig-schema.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "moduleResolution": "bundler",
+    "module": "preserve",
+    "types": [
+      "./usagi.d.ts",
+      "lua-types/5.5"
+    ],
+    "strict": true,
+    "rootDir": "src",
+    "outDir": "game"
+  },
+  "tstl": {
+    "luaTarget": "5.5",
+    "noImplicitGlobalVariables": false,
+    "noImplicitSelf": true,
+    "noHeader": true,
+    "luaLibImport": "require-minimal"
+  }
+}
