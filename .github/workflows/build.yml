@@ -10,6 +10,10 @@ permissions:
   contents: read
   pages: write
 
+defaults:
+  run:
+    working-directory: ./prototype_1_pong # temp
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -19,7 +23,7 @@ jobs:
       - uses: pnpm/action-setup@ac5bf11548bf5e19b8aadb8182072616590fa4a6
         with:
           run_install: false
-      - uses: actions/setup-node@7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ".node-version"
           cache: "pnpm"
@@ -28,7 +32,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          USAGI_VERSION="$(cat ./.usagi-version)"
+          USAGI_VERSION="$(cat .usagi-version)"
 
           url="https://github.com/brettchalupa/usagi/releases/download/v$USAGI_VERSION/usagi-$USAGI_VERSION-linux-x86_64.tar.gz"
           sha="a2fc30b6e83f83fd3cd5661c168226f6eab2f3b446f33ccb7b6592bd15237250"
