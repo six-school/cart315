@@ -1,6 +1,8 @@
-a little pong.
+a little pong. [**play online.**](https://six-school.github.io/cart315/)
 
-This runs on [Usagi Engine](https://usagiengine.com/), with [TypeScript](https://www.typescriptlang.org/) code compiled via [TypeScriptToLua](https://typescripttolua.github.io/). Sorry to be a weirdo, but it's comfortable for me and pretty nice for prototypes.
+This runs on [Usagi Engine](https://usagiengine.com/), with [TypeScript](https://www.typescriptlang.org/) code compiled via [TypeScriptToLua](https://typescripttolua.github.io/). Sorry to be a weirdo — I've found it's a really comfortable API for small game prototypes, with hot-reloading and convenient web builds.
+
+# Developing
 
 To run or tweak the game, first download [Usagi 1.3.2](https://codeberg.org/brettchalupa/usagi/releases/tag/v1.3.2). Grab the binary for your platform and place it in `bin/`. (Untested on Windows, scripts might need to be tweaked to handle `.exe` extension, sorry!)
 
@@ -14,6 +16,12 @@ pnpm install
 pnpm tstl # compile to lua once to "warm up" so that usagi picks up the files
 ```
 
-From now on, you should be able to run `pnpm dev` to spin up the compiler and game engine in parallel. The main file is [`src/main.ts`](./src/main.ts). You can tweak it with the game open and changes will be hot-reloaded instantly. You may need to `F5` to reset the game state if things get funky.
+After the above one-time setup is complete, from now on you can run
 
-To build to web, run `pnpm build`.
+```sh
+pnpm dev
+```
+
+and it'll spin up the compiler and game engine in parallel. The main file is [`src/main.ts`](./src/main.ts). You can tweak it with the game open and changes will be hot-reloaded instantly. Hot-reloading preserves game state! You can hit `F5` to reset it to the initial state (and indeed you may occasionally need to do so if things get funky).
+
+To build the web version, run `pnpm build`.
