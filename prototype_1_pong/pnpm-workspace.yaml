@@ -1,4 +1,4 @@
-# trustPolicyIgnoreAfter: 10080
+trustPolicyIgnoreAfter: 10080
 
 blockExoticSubdeps: true
 
@@ -7,3 +7,7 @@ minimumReleaseAge: 10080
 strictDepBuilds: true
 
 trustPolicy: no-downgrade
+
+allowBuilds:
+  esbuild: false # optional transitive, not needed for this project
+  unrs-resolver: false # ditto
