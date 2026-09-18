@@ -73,8 +73,33 @@ function _update(dt: number) {
     // TODO: bounce sound
   }
 
+  // handle scoring
+  let didScore = false;
+  if (State.ballX + ballSize < 0) {
+    State.p2Score += 1;
+    State.ballAngle = 0; // TODO
+
+    State.ballX = usagi.GAME_W / 2 - ballSize / 2;
+    State.ballY = usagi.GAME_H / 2 - ballSize / 2;
+    didScore = true;
+  } else if (State.ballX > usagi.GAME_W) {
+    State.p1Score += 1;
+    State.ballAngle = math.pi; // TODO
+
+    State.ballX = usagi.GAME_W / 2 - ballSize / 2;
+    State.ballY = usagi.GAME_H / 2 - ballSize / 2;
+    didScore = true;
+  }
+  if (didScore) {
+    // TODO: play sound
+  }
+
+  bounceOffPaddles();
+}
+
+function bounceOffPaddles() {
+  // left
   if (
-    // prettier-ignore
     util.rect_overlap(
       { x: State.ballX, y: State.ballY, w: ballSize, h: ballSize },
       { x: paddleOffsetFromEdge, y: State.paddle1Y, w: paddleWidth, h: paddleHeight },
@@ -87,6 +112,7 @@ function _update(dt: number) {
     // TODO: bounce paddle sound
   }
 
+  // right
   if (
     // prettier-ignore
     util.rect_overlap(
