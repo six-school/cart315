@@ -66,7 +66,7 @@ function _update(dt: number) {
   }
   if (bouncedOffWall) {
     State.ballAngle = -State.ballAngle;
-    // TODO: bounce sound
+    sfx.play("bup");
   }
 
   // handle scoring
@@ -87,7 +87,7 @@ function _update(dt: number) {
     didScore = true;
   }
   if (didScore) {
-    // TODO: play sound
+    sfx.play("bop");
   }
 
   bounceOffPaddles();
@@ -106,7 +106,7 @@ function bounceOffPaddles() {
 
     State.ballAngle = util.clamp(ballYPaddleYDelta, -1, 1) * -1 * maxBounceAngle;
     State.ballX = paddleOffsetFromEdge + paddleWidth;
-    // TODO: bounce paddle sound
+    sfx.play("bip");
   }
 
   // right
@@ -122,7 +122,7 @@ function bounceOffPaddles() {
 
     State.ballAngle = math.pi - util.clamp(ballYPaddleYDelta, -1, 1) * -1 * maxBounceAngle;
     State.ballX = usagi.GAME_W - paddleOffsetFromEdge - ballSize;
-    // TODO: bounce paddle sound
+    sfx.play("bip");
   }
 }
 
@@ -144,7 +144,7 @@ function _draw(_dt: number) {
     // draw score
     const [p1ScoreWidth] = usagi.measure_text(p1Score.toString());
     gfx.text_ex(p1Score.toString(), usagi.GAME_W / 2 - p1ScoreWidth * textScale - 10, 10, textScale, 0, gfx.COLOR_WHITE, 1);
-    gfx.text_ex(p2Score.toString(), usagi.GAME_W / 2 + 10, 10, textScale, 0, gfx.COLOR_WHITE, 1);
+    gfx.text_ex(p2Score.toString(), usagi.GAME_W / 2 + borderSize + 10, 10, textScale, 0, gfx.COLOR_WHITE, 1);
 
     // draw paddles
     gfx.rect_fill(paddleOffsetFromEdge, paddle1Y, paddleWidth, paddleHeight, gfx.COLOR_WHITE);

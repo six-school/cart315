@@ -9,4 +9,4 @@ yarn-error.log
 
 # usagi lua and web exports
 /export
-/game
+/game/**/*.lua
