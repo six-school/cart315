@@ -1,12 +1,12 @@
-/* eslint-disable unicorn/consistent-destructuring */
 import { assertNever } from "./util";
 
 import type { GameState as NormalState } from "./normal";
+import type { GameState as SpeedState } from "./speed";
 import type { GameState as RPGState } from "./rpg";
 
 type MenuState = { mode: "menu"; selected: number };
 
-type GameState = MenuState | NormalState | RPGState;
+type GameState = MenuState | NormalState | RPGState | SpeedState;
 
 declare let State: GameState;
 
@@ -17,6 +17,7 @@ t = 0;
 // TODO: just derive from imported games?
 const gameList: [string, string][] = [
   ["normal", "Normal Pong"],
+  ["speed", "Speed Pong"],
   ["rpg", "RPG Pong"],
 ];
 
@@ -26,8 +27,8 @@ _config = () => {
 
 // F5 to reset
 _init = () => {
-  // initMenu();
-  (require("./rpg") as typeof import("./rpg"))._init();
+  initMenu();
+  // (require("./rpg") as typeof import("./rpg"))._init();
 };
 
 _update = (dt: number) => {
@@ -44,6 +45,9 @@ _update = (dt: number) => {
     case "normal":
       (require("./normal") as typeof import("./normal"))._update(dt);
       break;
+    case "speed":
+      (require("./speed") as typeof import("./speed"))._update(dt);
+      break;
     case "rpg":
       (require("./rpg") as typeof import("./rpg"))._update(dt);
       break;
@@ -59,6 +63,9 @@ _draw = () => {
       break;
     case "normal":
       (require("./normal") as typeof import("./normal"))._draw();
+      break;
+    case "speed":
+      (require("./speed") as typeof import("./speed"))._draw();
       break;
     case "rpg":
       (require("./rpg") as typeof import("./rpg"))._draw();
@@ -78,10 +85,10 @@ function initMenu() {
 // eslint-disable-next-line @typescript-eslint/no-shadow
 function updateMenu(dt: number, State: MenuState) {
   if (input.key_pressed(input.KEY_W) || input.key_pressed(input.KEY_UP)) {
-    State.selected = (State.selected + 1) % gameList.length;
-  } else if (input.key_pressed(input.KEY_S) || input.key_pressed(input.KEY_DOWN)) {
     State.selected -= 1;
     if (State.selected < 0) State.selected = gameList.length - 1;
+  } else if (input.key_pressed(input.KEY_S) || input.key_pressed(input.KEY_DOWN)) {
+    State.selected = (State.selected + 1) % gameList.length;
   } else if (input.key_pressed(input.KEY_SPACE)) {
     require(gameList[State.selected][0])._init();
   }
