@@ -827,19 +827,19 @@ interface UsagiConfig {
  * Optional. Returns engine config read once before the window opens.
  * Omit if the defaults are fine.
  */
-declare function _config(): UsagiConfig | undefined;
+declare let _config: () => UsagiConfig | undefined;
 
 /** Called once when the game starts. Use for loading assets and initializing state. */
-declare function _init(): void;
+declare let _init: () => void;
 
 /**
  * Called every frame to update game state. Runs before `_draw`.
  * @param dt delta-time: seconds since last frame
  */
-declare function _update(dt: number): void;
+declare let _update: (dt: number) => void;
 
 /**
  * Called every frame to render. Runs after `_update`.
  * @param dt delta-time: seconds since last frame
  */
-declare function _draw(dt: number): void;
+declare let _draw: (dt: number) => void;
