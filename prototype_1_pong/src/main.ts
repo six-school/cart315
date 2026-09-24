@@ -20,6 +20,9 @@ const maxBounceAngle = math.rad(75);
 const borderSize = 3;
 const textScale = 2;
 
+// elapsed game time (slower than wall time if game slows down!)
+let t = 0;
+
 function _config() {
   return { name: "pong", game_id: "com.usagiengine.SIX_PONG" };
 }
@@ -39,6 +42,11 @@ function _init() {
 }
 
 function _update(dt: number) {
+  // cap delta time (slow framerate instead of allowing massive frameskip to occur)
+  // eslint-disable-next-line no-param-reassign
+  if (dt > 0.0333) dt = 0.0333;
+  t += dt;
+
   const { ballAngle, ballSpeed } = State;
 
   if (input.key_held(input.KEY_W)) State.paddle1Y -= paddleSpeed * dt;
