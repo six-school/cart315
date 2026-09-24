@@ -16,15 +16,22 @@ export type GameState = {
   player1Mp: number;
   player2Hp: number;
   player2Mp: number;
-} & RPGMode;
+  battle: RPGMode;
+};
 
-type RPGMode =
-  | {
-      state: "normal";
-    }
-  | { state: "battle"; player: "1" | "2"; enemyHp: number };
+type RPGMode = { state: "none" } | BattleMode;
+type BattleMode = {
+  state: "battle";
+  player: "1" | "2";
+  initializedAt: number;
+  cursor: number;
+  magicMenu: boolean;
+  enemyHp: number;
+};
 
 declare let State: GameState;
+
+const initTime = 1; // seconds
 
 const paddleHeight = 30;
 const paddleWidth = 5;
@@ -34,6 +41,8 @@ const ballSize = 6;
 const maxBounceAngle = math.rad(75);
 const borderSize = 3;
 const textScale = 2;
+
+const options = ["Attack", "Defend", "Magic", "Run"];
 
 // F5 to reset
 export function _init() {
@@ -52,22 +61,39 @@ export function _init() {
     player1Mp: 5,
     player2Hp: 12,
     player2Mp: 5,
-    state: "normal",
+    battle: { state: "none" },
   };
 }
 
 export function _update(dt: number) {
-  switch (State.state) {
-    case "normal":
+  switch (State.battle.state) {
+    case "none":
       updateNormal(dt);
       break;
     case "battle":
+      updateBattle(dt, State.battle);
       break;
     default:
-      assertNever(State);
+      assertNever(State.battle);
   }
 }
-export function updateNormal(dt: number) {
+
+function updateBattle(dt: number, state: BattleMode) {
+  if (usagi.elapsed < state.initializedAt + initTime) {
+    return;
+  }
+
+  if (input.key_pressed(input.KEY_W) || input.key_pressed(input.KEY_UP)) {
+    state.cursor -= 1;
+    if (state.cursor < 0) state.cursor = options.length - 1;
+  } else if (input.key_pressed(input.KEY_S) || input.key_pressed(input.KEY_DOWN)) {
+    state.cursor = (state.cursor + 1) % options.length;
+  } else if (input.key_pressed(input.KEY_SPACE)) {
+    //
+  }
+}
+
+function updateNormal(dt: number) {
   const { ballAngle, ballSpeed } = State;
 
   if (input.key_held(input.KEY_W)) State.paddle1Y -= paddleSpeed * dt;
@@ -130,6 +156,17 @@ function bounceOffPaddles() {
       { x: paddleOffsetFromEdge, y: State.paddle1Y, w: paddleWidth, h: paddleHeight },
     )
   ) {
+    State.battle = {
+      state: "battle",
+      player: "1",
+      initializedAt: usagi.elapsed,
+      cursor: 0,
+      magicMenu: false,
+      enemyHp: 10,
+    };
+    music.play("battle");
+
+    // TODO
     const ballYPaddleYDelta =
       (State.paddle1Y + paddleHeight / 2 - State.ballY + ballSize / 2) / (paddleHeight / 2);
 
@@ -146,6 +183,17 @@ function bounceOffPaddles() {
       { x: usagi.GAME_W - paddleOffsetFromEdge, y: State.paddle2Y, w: paddleWidth, h: paddleHeight }
     )
   ) {
+    State.battle = {
+      state: "battle",
+      player: "2",
+      initializedAt: usagi.elapsed,
+      cursor: 0,
+      magicMenu: false,
+      enemyHp: 10,
+    };
+    music.play("battle");
+
+    // TODO
     const ballYPaddleYDelta =
       (State.paddle2Y + paddleHeight / 2 - State.ballY + ballSize / 2) / (paddleHeight / 2);
 
@@ -178,5 +226,64 @@ export function _draw() {
     // draw paddles
     gfx.rect_fill(paddleOffsetFromEdge, paddle1Y, paddleWidth, paddleHeight, gfx.COLOR_WHITE);
     gfx.rect_fill(usagi.GAME_W - paddleOffsetFromEdge, paddle2Y, paddleWidth, paddleHeight, gfx.COLOR_WHITE);
+  }
+
+  if (State.battle.state === "battle") {
+    // TODO: initial anim
+
+    // const anim = usagi.elapsed - State.battle.initializedAt;
+    // if (anim < initTime) {
+    //   const x = util.lerp(usagi.GAME_W / 2, 10, anim);
+    //   const y = util.lerp(usagi.GAME_H / 2, 10, anim);
+    //   const w = util.lerp(0, usagi.GAME_W - 10 * 2, anim);
+    //   const h = util.lerp(0, usagi.GAME_H - 10 * 2, anim);
+    //   gfx.rect_fill(x, y, w, h, gfx.COLOR_DARK_BLUE);
+    //   return;
+    // }
+    // gfx.rect_fill(10, 10, usagi.GAME_W - 20, usagi.GAME_H - 20, gfx.COLOR_DARK_BLUE);
+
+    const BG_W = 120;
+    const BG_H = 104;
+    gfx.sspr_ex(
+      // src
+      0,
+      0,
+      BG_W,
+      BG_H,
+      // dest
+      usagi.GAME_W / 2 - BG_W / 2,
+      10,
+      BG_W,
+      BG_H,
+      false,
+      false,
+      0,
+      gfx.COLOR_TRUE_WHITE,
+      1.0,
+    );
+    gfx.rect_fill(usagi.GAME_W / 2 - 10, usagi.GAME_H / 2 - 30, 20, 20, gfx.COLOR_WHITE);
+
+    // bottom text
+    gfx.rect_fill(5, 10 + BG_H + 5, usagi.GAME_W - 10, 55, gfx.COLOR_BLACK);
+    gfx.rect_ex(5, 10 + BG_H + 5, usagi.GAME_W - 10, 55, 3, gfx.COLOR_LIGHT_GRAY);
+    gfx.text("A BALL draws near!\nCommand?", 12, 10 + BG_H + 10, gfx.COLOR_WHITE);
+
+    // command
+    gfx.rect_fill(5, 5, 60, 100, gfx.COLOR_BLACK);
+    gfx.rect_ex(5, 5, 60, 100, 3, gfx.COLOR_LIGHT_GRAY);
+    for (const [i, opt] of options.entries()) {
+      gfx.text(opt, 20, 12 + i * 12, gfx.COLOR_WHITE);
+    }
+    gfx.text(">", 12, 12 + 12 * State.battle.cursor, gfx.COLOR_WHITE);
+
+    // stats
+    const statsX = usagi.GAME_W - 60;
+    const hp = State.battle.player === "1" ? State.player1Hp : State.player2Hp;
+    const mp = State.battle.player === "1" ? State.player1Mp : State.player2Mp;
+    gfx.rect_fill(statsX - 5, 5, 60, 100, gfx.COLOR_BLACK);
+    gfx.rect_ex(statsX - 5, 5, 60, 100, 3, gfx.COLOR_LIGHT_GRAY);
+    gfx.text("Hero", statsX + 5, 12, gfx.COLOR_WHITE);
+    gfx.text(`HP ${hp}`, statsX + 5, 24, gfx.COLOR_WHITE);
+    gfx.text(`MP ${mp}`, statsX + 5, 36, gfx.COLOR_WHITE);
   }
 }

@@ -1,14 +1,24 @@
 /** @noSelfInFile */
 /* eslint-disable @typescript-eslint/no-restricted-types */
 
-// =============================================================================
-// usagi engine — TypeScriptToLua declarations
-// Generated from the Usagi API stubs (usagi 1.1.0).
-// =============================================================================
-
-// ---------------------------------------------------------------------------
-// Shared geometry helpers (used by util.*)
-// ---------------------------------------------------------------------------
+interface UsagiConfig {
+  /** display name. Window title, macOS .app bundle directory, and (slugged) archive/binary names on `usagi export` (default: project directory name) */
+  name?: string;
+  /** false (default) = any scale that fits the window while preserving aspect ratio; true = integer scale only with letterbox bars */
+  pixel_perfect?: boolean;
+  /** reverse-DNS identifier (e.g. "com.you.mygame"), required for save/load */
+  game_id?: string;
+  /** 1-based tile index into sprites.png to use as the window icon (same indexing as gfx.spr); omit for the default Usagi bunny */
+  icon?: number;
+  /** game render width in pixels (default 320). Tested range 160..640 */
+  game_width?: number;
+  /** game render height in pixels (default 180). Tested range 90..360 */
+  game_height?: number;
+  /** side length, in pixels, of one cell in sprites.png (default 16). Drives gfx.spr indexing, the tilepicker tool's grid, and the window-icon slicer. sprites.png must be a multiple of this value on both axes. */
+  sprite_size?: number;
+  /** true (default) = engine handles Esc/P/Enter/Start to open the built-in pause overlay; false = those keys flow through to user code so games can roll their own menu. With it off you also give up keyboard remap UI, the Input Tester, and gamepad-driven menu nav. `usagi.menu_item` registrations no longer render. Suitable for keyboard-driven prototypes. */
+  pause_menu?: boolean;
+}
 
 interface Vec2 {
   x: number;
@@ -28,52 +38,69 @@ interface Circ {
   r: number;
 }
 
-// ---------------------------------------------------------------------------
-// gfx
-// ---------------------------------------------------------------------------
-
-/**
- * Graphics API. All drawing happens in game-space pixels.
- *
- * Color constants use 1-based palette slots matching `gfx.spr` and the
- * default Pico-8 palette. Slot `0` is `COLOR_TRUE_WHITE` (pure white);
- * any index above the active palette's length renders as a magenta sentinel.
- */
 declare namespace gfx {
-  const COLOR_TRUE_WHITE: 0;
-  const COLOR_BLACK: 1;
-  const COLOR_DARK_BLUE: 2;
-  const COLOR_DARK_PURPLE: 3;
-  const COLOR_DARK_GREEN: 4;
-  const COLOR_BROWN: 5;
-  const COLOR_DARK_GRAY: 6;
-  const COLOR_LIGHT_GRAY: 7;
-  const COLOR_WHITE: 8;
-  const COLOR_RED: 9;
-  const COLOR_ORANGE: 10;
-  const COLOR_YELLOW: 11;
-  const COLOR_GREEN: 12;
-  const COLOR_BLUE: 13;
-  const COLOR_INDIGO: 14;
-  const COLOR_PINK: 15;
-  const COLOR_PEACH: 16;
-
-  /** Clears the screen to the given color. */
-  function clear(color: number): void;
-
+  /** 0 */
+  const COLOR_TRUE_WHITE: number;
+  /** 1 */
+  const COLOR_BLACK: number;
+  /** 2 */
+  const COLOR_DARK_BLUE: number;
+  /** 3 */
+  const COLOR_DARK_PURPLE: number;
+  /** 4 */
+  const COLOR_DARK_GREEN: number;
+  /** 5 */
+  const COLOR_BROWN: number;
+  /** 6 */
+  const COLOR_DARK_GRAY: number;
+  /** 7 */
+  const COLOR_LIGHT_GRAY: number;
+  /** 8 */
+  const COLOR_WHITE: number;
+  /** 9 */
+  const COLOR_RED: number;
+  /** 10 */
+  const COLOR_ORANGE: number;
+  /** 11 */
+  const COLOR_YELLOW: number;
+  /** 12 */
+  const COLOR_GREEN: number;
+  /** 13 */
+  const COLOR_BLUE: number;
+  /** 14 */
+  const COLOR_INDIGO: number;
+  /** 15 */
+  const COLOR_PINK: number;
+  /** 16 */
+  const COLOR_PEACH: number;
   /**
-   * Draws text at (x, y) using the bundled monogram font (5×7 px, 16 px
-   * line height).
+   * Clears the screen to the given color.
+   * @param color  a gfx.COLOR_* constant
    */
-  function text(text: string, x: number, y: number, color: number): void;
-
+  function clear(color: number): void;
   /**
-   * Extended `text` with scale, rotation, and alpha.
-   * Rotation pivots around the center of the unrotated bounding box; (x, y)
-   * stays the top-left at `rotation = 0`.
-   * Use integer scale values for crisp rendering.
-   * @param rotation radians — use `math.rad(deg)` for degree literals, `0` for none
-   * @param alpha opacity 0..1; 1.0 is fully opaque
+   * Draws text at (x, y) in the given color. Uses the bundled monogram
+   * font at its 16px design size (a 5×7 pixel font with 16px line height).
+   * @param text  string to render
+   * @param x  left edge in game-space pixels
+   * @param y  top edge in game-space pixels
+   * @param color  a gfx.COLOR_* constant
+   * @param alpha  opacity in `0..1`; omit or `1.0` for opaque
+   */
+  function text(text: string, x: number, y: number, color: number, alpha?: number): void;
+  /**
+   * Extended `text`: scale, rotation, and alpha. Rotation pivots around
+   * the center of the text's unrotated bounding box; (x, y) stays the
+   * top-left at `rotation = 0`. Integer scale values render crisp
+   * (monogram is a bitmap font with POINT filter); fractional values
+   * blur, so use integers unless you specifically want a smooth tween.
+   * @param text  string to render
+   * @param x  left edge in game-space pixels (unrotated bounding box)
+   * @param y  top edge in game-space pixels (unrotated bounding box)
+   * @param scale  font-size multiplier; integer recommended for crisp text
+   * @param rotation  rotation in radians; use `math.rad(deg)` for literal-degree values, `0` for none
+   * @param color  a gfx.COLOR_* constant
+   * @param alpha  opacity in `0..1`; `1.0` is opaque
    */
   function text_ex(
     text: string,
@@ -84,41 +111,78 @@ declare namespace gfx {
     color: number,
     alpha: number,
   ): void;
-
-  /** Draws a rectangle outline. */
-  function rect(
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    color: number,
-  ): void;
-
-  /** Draws a filled rectangle. */
+  /**
+   * Draws a rectangle outline.
+   * @param x  left edge in game-space pixels
+   * @param y  top edge in game-space pixels
+   * @param w  width in pixels
+   * @param h  height in pixels
+   * @param color  a gfx.COLOR_* constant
+   * @param alpha  opacity in `0..1`; omit or `1.0` for opaque
+   */
+  function rect(x: number, y: number, w: number, h: number, color: number, alpha?: number): void;
+  /**
+   * Draws a filled rectangle.
+   * @param x  left edge in game-space pixels
+   * @param y  top edge in game-space pixels
+   * @param w  width in pixels
+   * @param h  height in pixels
+   * @param color  a gfx.COLOR_* constant
+   * @param alpha  opacity in `0..1`; omit or `1.0` for opaque
+   */
   function rect_fill(
     x: number,
     y: number,
     w: number,
     h: number,
     color: number,
+    alpha?: number,
   ): void;
-
-  /** Draws a circle outline centered at (x, y). */
-  function circ(x: number, y: number, r: number, color: number): void;
-
-  /** Draws a filled circle centered at (x, y). */
-  function circ_fill(x: number, y: number, r: number, color: number): void;
-
-  /** Draws a line from (x1, y1) to (x2, y2). */
+  /**
+   * Draws a circle outline centered at (x, y).
+   * @param x  center x in game-space pixels
+   * @param y  center y in game-space pixels
+   * @param r  radius in pixels
+   * @param color  a gfx.COLOR_* constant
+   * @param alpha  opacity in `0..1`; omit or `1.0` for opaque
+   */
+  function circ(x: number, y: number, r: number, color: number, alpha?: number): void;
+  /**
+   * Draws a filled circle centered at (x, y).
+   * @param x  center x in game-space pixels
+   * @param y  center y in game-space pixels
+   * @param r  radius in pixels
+   * @param color  a gfx.COLOR_* constant
+   * @param alpha  opacity in `0..1`; omit or `1.0` for opaque
+   */
+  function circ_fill(x: number, y: number, r: number, color: number, alpha?: number): void;
+  /**
+   * Draws a line from (x1, y1) to (x2, y2).
+   * @param x1  start x in game-space pixels
+   * @param y1  start y in game-space pixels
+   * @param x2  end x in game-space pixels
+   * @param y2  end y in game-space pixels
+   * @param color  a gfx.COLOR_* constant
+   * @param alpha  opacity in `0..1`; omit or `1.0` for opaque
+   */
   function line(
     x1: number,
     y1: number,
     x2: number,
     y2: number,
     color: number,
+    alpha?: number,
   ): void;
-
-  /** Rectangle outline with a stroke thickness. */
+  /**
+   * Extended `rect`: rectangle outline with a thickness param.
+   * @param x  left edge in game-space pixels
+   * @param y  top edge in game-space pixels
+   * @param w  width in pixels
+   * @param h  height in pixels
+   * @param thickness  stroke thickness in pixels
+   * @param color  a gfx.COLOR_* constant
+   * @param alpha  opacity in `0..1`; omit or `1.0` for opaque
+   */
   function rect_ex(
     x: number,
     y: number,
@@ -126,12 +190,18 @@ declare namespace gfx {
     h: number,
     thickness: number,
     color: number,
+    alpha?: number,
   ): void;
-
   /**
-   * Circle outline with a stroke thickness.
-   * Stroke is centered on the nominal radius, so concentric `circ_ex` calls
-   * at decreasing radii draw flush rings with no gaps.
+   * Extended `circ`: circle outline with a thickness param. Stroke is
+   * centered on the nominal radius so concentric `circ_ex` calls at
+   * radii `r`, `r-1`, `r-2`, ... draw flush rings with no gaps.
+   * @param x  center x in game-space pixels
+   * @param y  center y in game-space pixels
+   * @param r  radius in pixels
+   * @param thickness  stroke thickness in pixels
+   * @param color  a gfx.COLOR_* constant
+   * @param alpha  opacity in `0..1`; omit or `1.0` for opaque
    */
   function circ_ex(
     x: number,
@@ -139,9 +209,18 @@ declare namespace gfx {
     r: number,
     thickness: number,
     color: number,
+    alpha?: number,
   ): void;
-
-  /** Line with a stroke thickness. */
+  /**
+   * Extended `line`: line with a thickness param.
+   * @param x1  start x in game-space pixels
+   * @param y1  start y in game-space pixels
+   * @param x2  end x in game-space pixels
+   * @param y2  end y in game-space pixels
+   * @param thickness  stroke thickness in pixels
+   * @param color  a gfx.COLOR_* constant
+   * @param alpha  opacity in `0..1`; omit or `1.0` for opaque
+   */
   function line_ex(
     x1: number,
     y1: number,
@@ -149,9 +228,19 @@ declare namespace gfx {
     y2: number,
     thickness: number,
     color: number,
+    alpha?: number,
   ): void;
-
-  /** Draws a triangle outline from three vertices. */
+  /**
+   * Draws a triangle outline from three points.
+   * @param x1  first vertex x in game-space pixels
+   * @param y1  first vertex y in game-space pixels
+   * @param x2  second vertex x in game-space pixels
+   * @param y2  second vertex y in game-space pixels
+   * @param x3  third vertex x in game-space pixels
+   * @param y3  third vertex y in game-space pixels
+   * @param color  a gfx.COLOR_* constant
+   * @param alpha  opacity in `0..1`; omit or `1.0` for opaque
+   */
   function tri(
     x1: number,
     y1: number,
@@ -160,11 +249,19 @@ declare namespace gfx {
     x3: number,
     y3: number,
     color: number,
+    alpha?: number,
   ): void;
-
   /**
-   * Draws a filled triangle from three vertices.
-   * Vertex winding order doesn't matter; it is corrected internally.
+   * Draws a filled triangle from three points. Vertex order doesn't
+   * matter; winding is corrected internally.
+   * @param x1  first vertex x in game-space pixels
+   * @param y1  first vertex y in game-space pixels
+   * @param x2  second vertex x in game-space pixels
+   * @param y2  second vertex y in game-space pixels
+   * @param x3  third vertex x in game-space pixels
+   * @param y3  third vertex y in game-space pixels
+   * @param color  a gfx.COLOR_* constant
+   * @param alpha  opacity in `0..1`; omit or `1.0` for opaque
    */
   function tri_fill(
     x1: number,
@@ -174,39 +271,65 @@ declare namespace gfx {
     x3: number,
     y3: number,
     color: number,
+    alpha?: number,
   ): void;
-
-  /** Sets a single pixel. */
-  function px(x: number, y: number, color: number): void;
-
   /**
-   * Reads a pixel from the most recently rendered frame.
-   * Returns RGB channels plus the 1-based palette slot when the color is an
-   * exact palette match; returns four `undefined`s for off-screen coordinates
-   * or before the first frame.
+   * Sets a single pixel.
+   * @param x  x in game-space pixels
+   * @param y  y in game-space pixels
+   * @param color  a gfx.COLOR_* constant
+   * @param alpha  opacity in `0..1`; omit or `1.0` for opaque
+   */
+  function px(x: number, y: number, color: number, alpha?: number): void;
+  /**
+   * Reads a pixel from the most recently rendered frame. Returns the
+   * RGB channels of the color at `(x, y)` plus the 1-based palette
+   * slot when the color is an exact match for an active palette entry
+   * (e.g. anything drawn with a `gfx.COLOR_*` constant). Returns four
+   * `nil`s for off-screen coordinates, or on the very first frame
+   * before any drawing has happened.
+   * Reads reflect the previous frame's finished image, so in-progress
+   * draws inside the current `_draw` aren't visible. Common uses:
+   * collision-by-color, fog-of-war reveals, water reflections, palette
+   * swap effects.
+   * PERFORMANCE: expensive on web and can drop performance.
+   * If you only need to sample your own sprite art, use `gfx.get_spr_px`,
+   * which is not expensive.
+   * @param x  x in game-space pixels (0 = left edge)
+   * @param y  y in game-space pixels (0 = top edge)
+   * @returns r              red channel, 0..255
+   * @returns g              green channel, 0..255
+   * @returns b              blue channel, 0..255
+   * @returns palette_index  1-based palette slot, or nil if off-palette
    */
   function get_px(
     x: number,
     y: number,
   ): LuaMultiReturn<
-    | [number, number, number, number]
-    | [undefined, undefined, undefined, undefined]
+    [number | undefined, number | undefined, number | undefined, number | undefined]
   >;
-
   /**
-   * Draws a 16×16 sprite from `sprites.png` at (x, y).
-   * Indices are 1-based, running left-to-right then top-to-bottom.
-   * Alpha-channel pixels are transparent.
+   * Draws a 16×16 sprite from the loaded sheet at (x, y). The sheet is
+   * `sprites.png` next to the game's main .lua; indices run left-to-right,
+   * top-to-bottom. Alpha-channel pixels render as transparent.
+   * @param index  one-based sprite index (1 = top-left cell)
+   * @param x  destination left edge in game-space pixels
+   * @param y  destination top edge in game-space pixels
+   * @param alpha  opacity in `0..1`; omit or `1.0` for opaque
    */
-  function spr(index: number, x: number, y: number): void;
-
+  function spr(index: number, x: number, y: number, alpha?: number): void;
   /**
-   * Extended `spr` with flip, rotation, tint, and alpha.
-   * Rotation pivots around the sprite center; (x, y) is the top-left of the
-   * unrotated bounding box.
-   * @param rotation radians — use `math.rad(deg)` for degree literals, `0` for none
-   * @param tint palette color multiplied over the sprite; `gfx.COLOR_WHITE` for none
-   * @param alpha opacity 0..1; 1.0 is fully opaque
+   * Extended `spr`: draws a sprite with required flip flags, rotation,
+   * tint, and alpha. Rotation pivots around the center of the sprite;
+   * (x, y) stays the top-left of the unrotated bounding box.
+   * @param index  one-based sprite index (1 = top-left cell)
+   * @param x  destination left edge in game-space pixels
+   * @param y  destination top edge in game-space pixels
+   * @param flip_x  flip horizontally (mirror left/right) when true
+   * @param flip_y  flip vertically (mirror top/bottom) when true
+   * @param rotation  rotation in radians; use `math.rad(deg)` for literal-degree values, `0` for none
+   * @param tint  palette color to multiply over the sprite; `gfx.COLOR_TRUE_WHITE` for none
+   * @param alpha  opacity in `0..1`; `1.0` is opaque
    */
   function spr_ex(
     index: number,
@@ -218,26 +341,45 @@ declare namespace gfx {
     tint: number,
     alpha: number,
   ): void;
-
   /**
-   * Reads a pixel from `sprites.png`.
-   * `index` is 1-based (same as `gfx.spr`); (x, y) is the offset inside the
-   * cell with (0, 0) at that cell's top-left.
-   * Returns four `undefined`s for out-of-range, no sprite sheet, or a fully
-   * transparent pixel.
+   * Reads a pixel from `sprites.png`. `index` selects a sprite cell
+   * (1-based, same shape as `gfx.spr`); `(x, y)` is the offset inside
+   * the cell, with `(0, 0)` as that cell's top-left. Returns RGB plus
+   * the 1-based palette slot for exact RGB matches; returns four
+   * `nil`s for an out-of-range index, out-of-cell coordinates, a
+   * project with no `sprites.png`, or a fully transparent pixel
+   * (`gfx.spr` draws alpha-keyed, so a transparent pixel reads as
+   * "nothing here" rather than as its backing RGB).
+   * Unlike `gfx.get_px`, sprite reads are deterministic and unaffected
+   * by draw order: handy for pixel-perfect sprite collision and for
+   * data-baked levels where you paint the layout into the sheet and
+   * read it back at startup to spawn entities.
+   * @param index  one-based sprite index (1 = top-left cell)
+   * @param x  0-based x inside the cell, in pixels
+   * @param y  0-based y inside the cell, in pixels
+   * @returns r              red channel, 0..255
+   * @returns g              green channel, 0..255
+   * @returns b              blue channel, 0..255
+   * @returns palette_index  1-based palette slot, or nil if off-palette
    */
   function get_spr_px(
     index: number,
     x: number,
     y: number,
   ): LuaMultiReturn<
-    | [number, number, number, number]
-    | [undefined, undefined, undefined, undefined]
+    [number | undefined, number | undefined, number | undefined, number | undefined]
   >;
-
   /**
-   * Draws a source rectangle from `sprites.png` at (dx, dy) at its original size.
-   * `s*` args are in sprite-sheet pixels; `d*` args are game-space pixels.
+   * Draws an arbitrary (sx, sy, sw, sh) rectangle from `sprites.png` at
+   * (dx, dy) at its original size. `s*` args index into the source sheet
+   * in pixels; `d*` args are the destination on screen.
+   * @param sx  source rect left edge on `sprites.png` (pixels)
+   * @param sy  source rect top edge on `sprites.png` (pixels)
+   * @param sw  source rect width in pixels
+   * @param sh  source rect height in pixels
+   * @param dx  destination left edge in game-space pixels
+   * @param dy  destination top edge in game-space pixels
+   * @param alpha  opacity in `0..1`; omit or `1.0` for opaque
    */
   function sspr(
     sx: number,
@@ -246,15 +388,28 @@ declare namespace gfx {
     sh: number,
     dx: number,
     dy: number,
+    alpha?: number,
   ): void;
-
   /**
-   * Extended `sspr`: source rect stretched to (dw, dh) with flip, rotation,
-   * tint, and alpha.
-   * All thirteen arguments are required.
-   * @param rotation radians — use `math.rad(deg)` for degree literals, `0` for none
-   * @param tint palette color multiplied over the sprite; `gfx.COLOR_WHITE` for none
-   * @param alpha opacity 0..1; 1.0 is fully opaque
+   * Extended `sspr`: source rect stretched to (dw, dh) at the destination
+   * with required flip flags, rotation, tint, and alpha. Rotation pivots
+   * around the center of the destination rect; (dx, dy) stays the
+   * top-left of the unrotated bounding box. All thirteen args required;
+   * write a thin wrapper if a particular flag combination shows up often
+   * in your code.
+   * @param sx  source rect left edge on `sprites.png` (pixels)
+   * @param sy  source rect top edge on `sprites.png` (pixels)
+   * @param sw  source rect width in pixels
+   * @param sh  source rect height in pixels
+   * @param dx  destination left edge in game-space pixels
+   * @param dy  destination top edge in game-space pixels
+   * @param dw  destination width in pixels (stretches the source)
+   * @param dh  destination height in pixels (stretches the source)
+   * @param flip_x  flip horizontally (mirror left/right) when true
+   * @param flip_y  flip vertically (mirror top/bottom) when true
+   * @param rotation  rotation in radians; use `math.rad(deg)` for literal-degree values, `0` for none
+   * @param tint  palette color to multiply over the sprite; `gfx.COLOR_TRUE_WHITE` for none
+   * @param alpha  opacity in `0..1`; `1.0` is opaque
    */
   function sspr_ex(
     sx: number,
@@ -271,88 +426,92 @@ declare namespace gfx {
     tint: number,
     alpha: number,
   ): void;
-
   /**
-   * Activates a post-process fragment shader loaded from `shaders/<name>.fs`.
-   * Pass `undefined` (nil) to clear the active shader.
-   * On web the loader prefers `<name>_es.fs` (GLSL ES 100); on desktop it
-   * prefers `<name>.fs` (GLSL 330). Source live-reloads in `usagi dev`.
+   * Activates a post-process fragment shader. Loads `shaders/<name>.fs`
+   * (and optional `<name>.vs`) and runs it as the final pass when the
+   * game render target is blitted to the window. Pass nil to clear.
+   * On web the loader prefers `<name>_es.fs` (GLSL ES 100); on desktop
+   * it prefers `<name>.fs` (GLSL 330). Shader source live-reloads on
+   * save in `usagi dev`.
+   * @param name  shader name (file stem under `shaders/`), or nil to clear
    */
   function shader_set(name: string | undefined): void;
-
   /**
-   * Sets a uniform on the active shader.
-   * A `number` maps to `float`; a 2/3/4-element array maps to vec2/vec3/vec4.
-   * Writes are queued and flushed once per frame before the post-process pass.
+   * Sets a uniform on the active shader. The value type drives the
+   * uniform type: a number maps to float, a 2/3/4-length numeric table
+   * maps to vec2 / vec3 / vec4. Queues the write; the engine flushes
+   * queued uniforms once per frame before the post-process pass.
+   * @param name  uniform name as declared in the shader source
+   * @param value  float, or {x, y} / {x, y, z} / {x, y, z, w}
    */
-  function shader_uniform(
-    name: string,
-    value:
-      | number
-      | [number, number]
-      | [number, number, number]
-      | [number, number, number, number],
-  ): void;
+  function shader_uniform(name: string, value: number | number[]): void;
 }
 
-// ---------------------------------------------------------------------------
-// sfx
-// ---------------------------------------------------------------------------
-
-/** Sound-effect API. Names are file stems from the `sfx/` directory. */
 declare namespace sfx {
   /**
-   * Plays a sound effect by name.
-   * Each sfx has a pool of 8 voices that overlap; the 9th simultaneous play
-   * steals the oldest. Unknown names are silently ignored.
+   * Plays a sound effect by name. Names are file stems from the `sfx/`
+   * directory next to the game's main .lua (e.g. `sfx/jump.wav` → "jump").
+   * Unknown names silently no-op. Each sfx has a pool of 8 voices that
+   * overlap; the 9th simultaneous play steals the oldest.
+   * @param name  file stem of a `.wav` under `sfx/`
    */
   function play(name: string): void;
-
   /**
-   * Plays a sound effect with per-call volume, pitch, and pan.
-   * @param volume 0..1 multiplier on the pause-menu sfx volume; 1.0 = identity
-   * @param pitch  pitch multiplier; 1.0 = identity, 0.5 = octave down, 2.0 = octave up
-   * @param pan    stereo pan; -1 left, 0 center, 1 right
+   * Plays a sound effect with per-call volume, pitch, and pan. Useful
+   * for varied one-shot effects (random pitch on every step, panned
+   * positional cues, attenuated UI clicks) without committing extra
+   * `.wav` files.
+   * @param name  file stem of a `.wav` under `sfx/`
+   * @param volume  `0..1` multiplier on the pause-menu sfx volume; `1.0` = identity
+   * @param pitch  pitch multiplier; `1.0` = identity, `0.5` = octave down, `2.0` = octave up
+   * @param pan  stereo pan; `-1` left, `0` center, `1` right
    */
-  function play_ex(
-    name: string,
-    volume: number,
-    pitch: number,
-    pan: number,
-  ): void;
+  function play_ex(name: string, volume: number, pitch: number, pan: number): void;
+  /**
+   * Stops every playing voice of a sound effect. Unknown or idle names
+   * silently no-op.
+   * @param name  file stem of a `.wav` under `sfx/`
+   */
+  function stop(name: string): void;
+  /** Stops every playing voice of every loaded sound effect. */
+  function stop_all(): void;
+  /**
+   * Returns true if any voice of the named sound effect is currently
+   * playing. False for unknown or idle names.
+   * @param name  file stem of a `.wav` under `sfx/`
+   */
+  function is_playing(name: string): boolean;
 }
 
-// ---------------------------------------------------------------------------
-// music
-// ---------------------------------------------------------------------------
-
-/**
- * Music API. Names are file stems from the `music/` directory.
- * Recognized extensions: ogg, mp3, wav, flac.
- */
 declare namespace music {
   /**
-   * Plays a music track once and stops at the end.
-   * Stops any currently-playing track first. Unknown names are silently ignored.
-   * Callable from `_init`.
+   * Plays a music track once and stops at the end. Names are file stems
+   * from the `music/` directory next to the game's main .lua (e.g.
+   * `music/intro.ogg` → "intro"). Recognized extensions: ogg, mp3, wav,
+   * flac. Stops the currently-playing track first if there is one.
+   * Unknown names silently no-op. Callable from `_init` so a title
+   * track can start the moment the window opens.
+   * @param name  file stem under `music/`
    */
   function play(name: string): void;
-
   /**
-   * Plays a music track and loops it indefinitely.
-   * Stops any currently-playing track first. Callable from `_init`.
+   * Plays a music track and loops it forever. Stops the currently-
+   * playing track first. Callable from `_init`.
+   * @param name  file stem under `music/`
    */
   function loop(name: string): void;
-
-  /** Stops whatever music is currently playing. No-op when nothing is playing. */
+  /** Stops whatever music is currently playing. No-op when nothing is. */
   function stop(): void;
-
   /**
-   * Plays a music track with full configuration.
-   * @param volume  0..1 multiplier on the pause-menu music volume; 1.0 = identity
-   * @param pitch   pitch multiplier; 1.0 = identity
-   * @param pan     stereo pan; -1 left, 0 center, 1 right
-   * @param looping true to loop, false to play once
+   * Plays a music track with initial volume / pitch / pan / loop
+   * settings. Replaces the simple `play` and `loop` for cases that need
+   * configuration; subsequent `music.mutate` calls modulate from these
+   * initial values.
+   * @param name  file stem under `music/`
+   * @param volume  `0..1` multiplier on the pause-menu music volume; `1.0` = identity
+   * @param pitch  pitch multiplier; `1.0` = identity
+   * @param pan  stereo pan; `-1` left, `0` center, `1` right
+   * @param looping  `true` plays in a loop, `false` plays once
    */
   function play_ex(
     name: string,
@@ -361,37 +520,21 @@ declare namespace music {
     pan: number,
     looping: boolean,
   ): void;
-
   /**
-   * Modulates the currently-playing track's volume, pitch, and pan in place.
-   * Replace semantics — each call sets the absolute current values.
-   * No-op when nothing is playing.
-   * @param volume 0..1 multiplier on the pause-menu music volume
-   * @param pitch  pitch multiplier; 1.0 = identity
-   * @param pan    stereo pan; -1 left, 0 center, 1 right
+   * Modulates the currently-playing music's volume / pitch / pan in
+   * place. Replace semantics — each call sets the absolute current
+   * values. No-op when nothing is playing. Common uses: ducking volume
+   * during dialogue, pitch-warping during hitstun, fading on death.
+   * Track the params in your own game state if you want tweens; the
+   * engine doesn't expose getters by design.
+   * @param volume  `0..1` multiplier on the pause-menu music volume
+   * @param pitch  pitch multiplier; `1.0` = identity
+   * @param pan  stereo pan; `-1` left, `0` center, `1` right
    */
   function mutate(volume: number, pitch: number, pan: number): void;
 }
 
-// ---------------------------------------------------------------------------
-// input
-// ---------------------------------------------------------------------------
-
-/**
- * Input API.
- *
- * Action constants are abstract and map to keyboard keys, gamepad buttons,
- * and analog-stick directions:
- * - LEFT:  arrow left, A, dpad left, left stick left
- * - RIGHT: arrow right, D, dpad right, left stick right
- * - UP:    arrow up, W, dpad up, left stick up
- * - DOWN:  arrow down, S, dpad down, left stick down
- * - BTN1:  Z, J; gamepad south face (Xbox A / PS Cross)
- * - BTN2:  X, K; gamepad east face (Xbox B / PS Circle)
- * - BTN3:  C, L; gamepad north + west face (Xbox Y/X / PS Triangle/Square)
- */
 declare namespace input {
-  // Action constants
   const LEFT: number;
   const RIGHT: number;
   const UP: number;
@@ -399,17 +542,11 @@ declare namespace input {
   const BTN1: number;
   const BTN2: number;
   const BTN3: number;
-
-  // Mouse button constants
   const MOUSE_LEFT: number;
   const MOUSE_RIGHT: number;
   const MOUSE_MIDDLE: number;
-
-  // Source identifier constants
-  const SOURCE_KEYBOARD: "keyboard";
-  const SOURCE_GAMEPAD: "gamepad";
-
-  // Keyboard key constants
+  const SOURCE_KEYBOARD: string;
+  const SOURCE_GAMEPAD: string;
   const KEY_A: number;
   const KEY_B: number;
   const KEY_C: number;
@@ -485,342 +622,421 @@ declare namespace input {
   const KEY_COMMA: number;
   const KEY_PERIOD: number;
   const KEY_SLASH: number;
-
-  /** Returns true the frame any source bound to `action` first went down. */
-  function pressed(action: number): boolean;
-
-  /** Returns true while any source bound to `action` is held. */
-  function held(action: number): boolean;
-
-  /** Returns true the frame any source bound to `action` was released. */
-  function released(action: number): boolean;
-
   /**
-   * Returns the label of the active source's primary binding for `action`
-   * (e.g. "Z" on keyboard, "Pad-A" on gamepad). Honors player key remaps.
-   * Returns `undefined` for unknown actions or unbound actions.
+   * Returns true the frame any source bound to `action` first went down.
+   * @param action  one of input.LEFT / RIGHT / UP / DOWN / BTN1 / BTN2 / BTN3
+   */
+  function pressed(action: number): boolean;
+  /**
+   * Returns true while any source bound to `action` is held.
+   * @param action  one of input.LEFT / RIGHT / UP / DOWN / BTN1 / BTN2 / BTN3
+   */
+  function held(action: number): boolean;
+  /**
+   * Returns true the frame any source bound to `action` first went up
+   * (transitioned from held to released). Mirrors `input.pressed` for the
+   * release edge.
+   * @param action  one of input.LEFT / RIGHT / UP / DOWN / BTN1 / BTN2 / BTN3
+   */
+  function released(action: number): boolean;
+  /**
+   * Label of the active input source's primary binding for `action` (e.g.
+   * "Z" on keyboard, "Pad-A" on gamepad). Honors any keymap remap the
+   * player set via the pause menu's Configure Keys flow. Useful for
+   * rendering contextual control prompts. Returns `nil` for unknown
+   * actions or when the active source has no binding for `action`.
+   * @param action  one of input.LEFT / RIGHT / UP / DOWN / BTN1 / BTN2 / BTN3
    */
   function mapping_for(action: number): string | undefined;
-
   /**
-   * Returns the input source that most recently fired any bound action.
-   * Switches only when a *bound* input fires.
+   * The input source that most recently fired any bound action. Returns
+   * `input.SOURCE_KEYBOARD` ("keyboard") or `input.SOURCE_GAMEPAD`
+   * ("gamepad"). Switches only when a *bound* input fires, so menu keys
+   * and idle activity don't flip it.
+   * @returns matches one of input.SOURCE_KEYBOARD / input.SOURCE_GAMEPAD
    */
-  function last_source(): "keyboard" | "gamepad";
-
+  function last_source(): string;
   /**
-   * Returns the cursor position in game-space pixels as (x, y).
-   * Values outside `0..usagi.GAME_W` / `0..usagi.GAME_H` indicate the
-   * cursor is over a letterbox bar.
+   * Cursor position in game-space pixels (so it lines up with `gfx.*`
+   * coords regardless of window size or pixel-perfect scaling). Returns
+   * two values: `x, y`. When the cursor sits over the letterbox bars,
+   * the values fall outside `0..usagi.GAME_W` / `0..usagi.GAME_H` —
+   * bounds-check before treating them as in-game coords.
+   * @returns x  game-space x in pixels
+   * @returns y  game-space y in pixels
    */
   function mouse(): LuaMultiReturn<[number, number]>;
-
-  /** Returns true while the given mouse button is held. */
-  function mouse_held(button: number): boolean;
-
-  /** Returns true the frame the given mouse button first went down. */
-  function mouse_pressed(button: number): boolean;
-
-  /** Returns true the frame the given mouse button was released. */
-  function mouse_released(button: number): boolean;
-
   /**
-   * Per-frame vertical scroll delta.
-   * Positive = scrolled up, negative = scrolled down, 0 = no scroll.
-   * May be fractional for trackpad swipes; compare with `> 0` / `< 0`.
+   * True when the cursor is over the drawn game area. Returns false when
+   * the cursor is outside the window or over the letterbox bars (so it
+   * lines up with the in-bounds range of `input.mouse`). Handy for
+   * gating hover/click handling to the play area.
+   */
+  function mouse_over(): boolean;
+  /**
+   * Returns true while the given mouse button is held.
+   * @param button  one of input.MOUSE_LEFT / input.MOUSE_RIGHT / input.MOUSE_MIDDLE
+   */
+  function mouse_held(button: number): boolean;
+  /**
+   * Returns true the frame the given mouse button first went down.
+   * @param button  one of input.MOUSE_LEFT / input.MOUSE_RIGHT / input.MOUSE_MIDDLE
+   */
+  function mouse_pressed(button: number): boolean;
+  /**
+   * Returns true the frame the given mouse button first went up
+   * (transitioned from held to released).
+   * @param button  one of input.MOUSE_LEFT / input.MOUSE_RIGHT / input.MOUSE_MIDDLE
+   */
+  function mouse_released(button: number): boolean;
+  /**
+   * Per-frame vertical scroll delta. Positive when scrolled up this
+   * frame, negative when down, 0 when no scroll. Floats are supported,
+   * so trackpad swipes can emit fractional values; match against `> 0`
+   * / `< 0` rather than equality with 1 / -1.
    */
   function mouse_scroll(): number;
-
   /**
    * Returns true while the given keyboard key is held.
-   * Bypasses the keymap and gamepad bindings — prefer `input.held(action)`
-   * for remappable game actions.
+   * Direct keyboard reads bypass the keymap override and gamepad
+   * bindings — prefer `input.held(action)` for game actions players
+   * should be able to remap or play with a controller. Use this for dev
+   * hotkeys (toggling debug overlays, F-key shortcuts) and for
+   * keyboard-and-mouse-only games.
+   * @param key  one of the input.KEY_* constants
    */
   function key_held(key: number): boolean;
-
   /**
-   * Returns true the frame the given keyboard key first went down.
-   * Bypasses the keymap and gamepad bindings.
+   * Returns true the frame the given keyboard key first went down. See
+   * `input.key_held` for the bypass-the-keymap caveat.
+   * @param key  one of the input.KEY_* constants
    */
   function key_pressed(key: number): boolean;
-
   /**
-   * Returns true the frame the given keyboard key was released.
-   * Bypasses the keymap and gamepad bindings.
+   * Returns true the frame the given keyboard key first went up
+   * (transitioned from held to released). See `input.key_held` for the
+   * bypass-the-keymap caveat.
+   * @param key  one of the input.KEY_* constants
    */
   function key_released(key: number): boolean;
-
   /**
-   * Shows or hides the OS cursor over the game window. Persists until changed.
-   * Callable from `_init` to hide the cursor before the first frame draws.
+   * Show or hide the OS cursor over the game window. Persists until
+   * changed. Callable from `_init` so games can hide the cursor before
+   * the first frame draws (e.g. when rendering a custom in-game cursor).
+   * @param visible  true to show, false to hide
    */
   function set_mouse_visible(visible: boolean): void;
-
   /**
-   * Returns whether the OS cursor is currently shown.
-   * Safe to use as a toggle: `input.set_mouse_visible(!input.mouse_visible())`.
+   * Returns true when the OS cursor is currently shown over the window.
+   * Reflects the latest `input.set_mouse_visible` call synchronously, so
+   * it's safe to use as part of a toggle:
+   * `input.set_mouse_visible(not input.mouse_visible())`.
    */
   function mouse_visible(): boolean;
 }
 
-// ---------------------------------------------------------------------------
-// usagi
-// ---------------------------------------------------------------------------
-
-/**
- * Engine-level namespace with metadata, persistence, and utility helpers.
- */
 declare namespace usagi {
-  /** Game render width in pixels. */
+  /** game render width in pixels */
   const GAME_W: number;
-  /** Game render height in pixels. */
+  /** game render height in pixels */
   const GAME_H: number;
-  /** Side length in pixels of one cell in `sprites.png` (drives `gfx.spr` indexing). */
+  /** side length, in pixels, of one cell in `sprites.png` (drives `gfx.spr` indexing) */
   const SPRITE_SIZE: number;
-  /** Build target. */
-  const PLATFORM: "web" | "macos" | "linux" | "windows" | "unknown";
-  /** `true` under `usagi dev`; `false` for `usagi run` and compiled binaries. */
+  /** build target: "web" | "macos" | "linux" | "windows" | "unknown" */
+  const PLATFORM: string;
+  /** true under `usagi dev`; false for `usagi run` and compiled binaries */
   const IS_DEV: boolean;
-  /** Wall-clock seconds since session start; updated once per frame before `_update`. */
+  /** inverse of IS_DEV; true for `usagi run` and compiled binaries */
+  const IS_RELEASE: boolean;
+  /** wall-clock seconds since session start; updated once per frame before _update */
   const elapsed: number;
-
   /**
-   * Measures `text` in the bundled font and returns its rendered size as
-   * (width, height) in pixels.
+   * Measures `text` in the bundled font and returns its rendered size
+   * in pixels. Returns two values: `width, height`. Available from any
+   * callback (`_init`, `_update`, `_draw`) — useful for pre-computing
+   * layout once in `_init` and reusing the result every frame.
+   * @param text  string to measure
+   * @returns width   pixel width
+   * @returns height  pixel height (equals the font's line height)
    */
   function measure_text(text: string): LuaMultiReturn<[number, number]>;
-
   /**
-   * Pretty-prints any Lua value to a string.
-   * Tables are recursed with sorted keys; cycles render as `<cycle>`.
-   * Useful with `gfx.text` for on-screen debug output.
+   * Pretty-prints any Lua value to a string. Tables are recursed with
+   * sorted keys; arrays render in order; cycles render as `<cycle>`;
+   * non-serializable values (functions, userdata, threads) render as
+   * placeholders. Pair with `print(usagi.dump(state))` for terminal
+   * debugging or feed the result into `gfx.text` to draw it on screen.
+   * @param v  the value to inspect
+   * @returns pretty  human-readable Lua-ish source for `v`
    */
   function dump(v: unknown): string;
-
   /**
-   * Persists a Lua table as JSON. Saves are namespaced by the `game_id` from
-   * `_config()`. Functions, userdata, NaN, and cycles raise an error.
+   * Persist a Lua table as JSON. Saves are per-game, namespaced by
+   * `game_id` from `_config()`. One file per game; nest your own
+   * structure inside (settings, run state, unlocks).
+   * @param t  table to serialize. functions, userdata, NaN, and cycles error
    */
   function save(t: object): void;
-
   /**
-   * Reads the persisted save table back.
-   * Returns `undefined` (nil) on first run (no save file).
-   * Idiomatic: `const state = usagi.load() ?? { ...defaults }`.
+   * Read the persisted save table back. Returns `nil` on first run
+   * (no save file). Idiomatic call: `state = usagi.load() or { ... defaults ... }`.
    */
   function load(): object | undefined;
-
   /**
-   * Reads a JSON file from the project's `data/` directory and returns it as
-   * a Lua table. Path is forward-slash-separated and relative to `data/`.
-   * Bundled by `usagi export`; hot-reloads in `usagi dev`.
+   * Reads a JSON file from the project's `data/` dir and returns it
+   * as a Lua table. `path` is forward-slash-separated and relative to
+   * `data/` (e.g. `"levels/01.json"`). Bundled by `usagi export`, so
+   * the same call works in dev and shipped builds. Hot-reload-aware:
+   * editing any file under `data/` triggers a script reload, so
+   * top-level `local levels = usagi.read_json("levels.json")` picks
+   * up new bytes without F5.
+   * @param path  forward-slash path under `data/`, e.g. `"levels/01.json"`
    */
   function read_json(path: string): object;
-
   /**
-   * Reads a text file from the project's `data/` directory as a UTF-8 string.
-   * Same path rules as `usagi.read_json`.
+   * Reads a text file from the project's `data/` dir as a UTF-8
+   * string. Same path rules as `usagi.read_json` (forward slashes,
+   * under `data/`, bundled by `usagi export`). Use this for plain
+   * text (dialog scripts, CSV grids, hand-rolled formats) and split /
+   * parse in Lua.
+   * @param path  forward-slash path under `data/`, e.g. `"dialog/intro.txt"`
    */
   function read_text(path: string): string;
-
   /**
-   * Serializes a Lua table to a pretty-printed JSON string.
-   * Same shape rules as `usagi.save`.
+   * Serializes a Lua table to a pretty-printed JSON string. Shares its
+   * shape validator with `usagi.save`, so the same rules apply: keys
+   * must be all strings or a dense `1..n` integer array; functions,
+   * userdata, NaN, and cycles raise an error. Useful for devtools
+   * overlays, structured logs, and any place you want JSON without
+   * going through the save file. Pair with `usagi.read_json` for a
+   * read/encode story; `usagi.dump` is the cycle-tolerant
+   * pretty-printer for ad-hoc debugging.
+   * @param t  table to serialize
+   * @returns json  pretty-printed JSON
    */
   function to_json(t: object): string;
-
   /**
-   * Registers a custom row on the pause menu's top view (between Continue and
-   * Settings). Up to 3 items; exceeding the cap raises an error. Items are
-   * cleared before each `_init` re-run.
-   * @param callback fired when the player selects this row; return `true` to keep the menu open
+   * Register a custom row on the pause menu's Top view, between
+   * Continue and Settings. Up to 3 items can be registered; calls past
+   * the cap raise a Lua error. Items auto-clear before each `_init`
+   * re-run so registrations in `_init` start fresh every reset.
+   * The callback fires when the player picks the row. The menu closes
+   * after the callback returns; return Lua `true` to keep it open
+   * (useful for toggles like "Mute").
+   * @param label  label drawn on the row
+   * @param callback  boolean?  called on selection; return true to keep the menu open
    */
-  function menu_item(label: string, callback: () => boolean | void): void;
-
+  function menu_item(label: string, callback: (...args: unknown[]) => unknown): void;
   /**
-   * Removes all Lua-registered menu items.
-   * Rarely needed — items auto-clear on `_init` re-run.
+   * Wipes every Lua-registered menu item. Rarely needed in practice:
+   * items auto-clear on `_init` re-run. Call manually if you want to
+   * swap the registered items mid-game.
    */
   function clear_menu_items(): void;
-
   /**
-   * Toggles fullscreen state and persists to `settings.json`.
-   * The window flip happens at the next frame start.
-   * @returns `true` if fullscreen is now on
+   * Flips fullscreen state and persists to `settings.json`. Same effect
+   * as the pause-menu Fullscreen row and the Alt+Enter shortcut, so all
+   * three paths stay in sync. The actual window flip happens at the
+   * next frame start; this call's return value reflects the new state
+   * immediately so `if usagi.toggle_fullscreen() then ... end` reads
+   * naturally.
+   * @returns fullscreen  true if fullscreen is now on
    */
   function toggle_fullscreen(): boolean;
-
-  /** Returns whether the window is currently fullscreen. */
-  function is_fullscreen(): boolean;
-
   /**
-   * Terminates the main loop the same way the pause-menu Quit row does.
-   * On web, the canvas freezes on the last frame rather than closing the page.
+   * Returns whether the window is currently fullscreen. Useful for
+   * rendering a "Fullscreen: On/Off" row in a custom settings menu.
+   */
+  function is_fullscreen(): boolean;
+  /**
+   * Terminate the main loop the same way the pause-menu Quit row and
+   * Shift+Esc do. Intended for custom in-game menus. On web the
+   * internal flag still flips but the emscripten main loop owns
+   * lifetime, so the canvas freezes on the last frame rather than
+   * tearing down the page; gate with `usagi.PLATFORM == "web"` if your
+   * menu shouldn't offer a quit option there.
    */
   function quit(): void;
 }
 
-// ---------------------------------------------------------------------------
-// util
-// ---------------------------------------------------------------------------
-
-/** Pure math/geometry helpers. No engine state. */
 declare namespace util {
-  /** Clamps `v` into `[lo, hi]`. */
+  /**
+   * Clamps `v` into `[lo, hi]`.
+   * @param v
+   * @param lo
+   * @param hi
+   */
   function clamp(v: number, lo: number, hi: number): number;
-
-  /** Returns -1, 0, or 1 according to the sign of `v`. */
-  function sign(v: number): -1 | 0 | 1;
-
-  /** Half-up rounding to the nearest integer. */
+  /**
+   * Returns -1, 0, or 1 according to the sign of `v`.
+   * @param v
+   */
+  function sign(v: number): number;
+  /**
+   * Half-up rounding to the nearest integer. Pixel snapping is the
+   * driving use case in 2D pixel-art games.
+   * @param v
+   */
   function round(v: number): number;
-
   /**
    * Moves `current` toward `target` by at most `max_delta`, never
-   * overshooting. Scale `max_delta` by `dt` for frame-rate independence.
+   * overshooting. Per-frame smoothing primitive — pass a delta
+   * scaled by `dt` for frame-rate independence.
+   * @param current
+   * @param target
+   * @param max_delta
    */
   function approach(current: number, target: number, max_delta: number): number;
-
-  /** Linear interpolation. `t = 0` → `a`, `t = 1` → `b`. Extrapolates outside `[0, 1]`. */
-  function lerp(a: number, b: number, t: number): number;
-
   /**
-   * Wraps `v` into `[lo, hi)`.
-   * Works for negative values: `util.wrap(-1, 0, 4) === 3`.
+   * Linear interpolation. `t = 0` returns `a`, `t = 1` returns `b`.
+   * Values of `t` outside `[0, 1]` extrapolate (no clamping).
+   * @param a
+   * @param b
+   * @param t
+   */
+  function lerp(a: number, b: number, t: number): number;
+  /**
+   * Wraps `v` into `[lo, hi)`. Useful for cyclic values like angles or
+   * looped indexing. Works for negative `v`: `util.wrap(-1, 0, 4) == 3`.
+   * @param v
+   * @param lo
+   * @param hi
    */
   function wrap(v: number, lo: number, hi: number): number;
-
   /**
-   * Boolean from time. Toggles `hz` times per second.
-   * Useful for invincibility flicker, UI blinks, and low-health warnings.
+   * Boolean from time. Toggles `hz` times per second — the on/off
+   * interval is `1/hz` seconds. For invincibility flicker, UI blinks,
+   * low-health warnings.
+   * @param t  seconds
+   * @param hz  toggles per second
    */
   function flash(t: number, hz: number): boolean;
-
   /**
-   * Remaps `v` from the range `[start_a, end_a]` into `[start_b, end_b]`.
-   * Example: `util.remap(128, 0, 256, 0, 100)` → `50`.
+   * Remaps the value `v` from the range [start_a, end_a] into the
+   * range [start_b, end_b]
+   * Useful for converting between different value ranges, like
+   * from [-1; 1] to [0; 1] or from [0; 1] to [0; 255]
+   * Example: `util.remap(128, 0,256, 0,100)` will return 50,
+   * because 128 is exactly at half of the range 0 - 256 and the
+   * half of the second range (0 - 100) is 50
+   * @param v  value
+   * @param start_a
+   * @param end_a
+   * @param start_b
+   * @param end_b
    */
-  function remap(
-    v: number,
-    start_a: number,
-    end_a: number,
-    start_b: number,
-    end_b: number,
-  ): number;
-
-  /** Normalizes a `{x, y}` vector to unit length. Returns a new table; input is unchanged. A zero vector returns `{x: 0, y: 0}`. */
-  function vec_normalize(v: Vec2): Vec2;
-
-  /** Euclidean distance between two `{x, y}` points. */
-  function vec_dist(a: Vec2, b: Vec2): number;
-
-  /** Squared distance between two `{x, y}` points. Cheaper than `vec_dist`; compare against `r * r`. */
-  function vec_dist_sq(a: Vec2, b: Vec2): number;
-
+  function remap(v: number, start_a: number, end_a: number, start_b: number, end_b: number): number;
   /**
-   * Builds a vector at `angle` radians with magnitude `len` (default 1).
-   * Pair with `math.atan(dy, dx)` to convert a direction into a velocity.
+   * Normalizes a `{x, y}` vector to unit length. Returns a new table;
+   * the input is unchanged. A zero vector returns `{x = 0, y = 0}`.
+   * @param v
+   */
+  function vec_normalize(v: Vec2): Vec2;
+  /**
+   * Distance between two `{x, y}` points.
+   * @param a
+   * @param b
+   */
+  function vec_dist(a: Vec2, b: Vec2): number;
+  /**
+   * Squared distance between two `{x, y}` points. Cheaper than
+   * `vec_dist` (skips the sqrt); use for "is X closer than Y?" by
+   * comparing against `r * r`.
+   * @param a
+   * @param b
+   */
+  function vec_dist_sq(a: Vec2, b: Vec2): number;
+  /**
+   * Builds a vector at `angle` (radians) with magnitude `len`. `len`
+   * defaults to 1 for a unit vector. Pair with `math.atan(dy, dx)` to
+   * convert any direction into a velocity.
+   * @param angle  radians
+   * @param len  magnitude (default 1)
    */
   function vec_from_angle(angle: number, len?: number): Vec2;
-
   /**
-   * Returns true when the `{x, y}` point is inside `{x, y, w, h}`.
-   * Half-open: left/top edges are inside, right/bottom edges are outside.
+   * True when the `{x, y}` point is inside the rect `{x, y, w, h}`.
+   * Half-open: left/top edges are inside, right/bottom edges are
+   * outside. Matches typical sprite-rect hit testing.
+   * @param p
+   * @param r
    */
   function point_in_rect(p: Vec2, r: Rect): boolean;
-
   /**
-   * Returns true when the `{x, y}` point is strictly inside circle `{x, y, r}`.
-   * Points on the boundary are considered outside.
+   * True when the `{x, y}` point is strictly inside the circle
+   * `{x, y, r}`. Points on the boundary are considered outside.
+   * @param p
+   * @param c
    */
   function point_in_circ(p: Vec2, c: Circ): boolean;
-
-  /** Returns true when the two AABBs share interior area. Edge-adjacent rects are non-overlapping. */
+  /**
+   * True when the two AABBs share interior area. Edge-adjacent rects
+   * are considered non-overlapping.
+   * @param a
+   * @param b
+   */
   function rect_overlap(a: Rect, b: Rect): boolean;
-
-  /** Returns true when the two circles overlap. Tangent circles are non-overlapping. */
+  /**
+   * True when the two circles overlap. Tangent circles are
+   * considered non-overlapping.
+   * @param a
+   * @param b
+   */
   function circ_overlap(a: Circ, b: Circ): boolean;
-
-  /** Returns true when a circle and an AABB overlap (closest-point method). */
+  /**
+   * True when a circle and a rect overlap. Uses the closest-point
+   * method: clamp the circle center to the rect, test distance.
+   * @param c
+   * @param r
+   */
   function circ_rect_overlap(c: Circ, r: Rect): boolean;
 }
 
-// ---------------------------------------------------------------------------
-// effect
-// ---------------------------------------------------------------------------
-
-/**
- * Juice primitives: hitstop, screen shake, flash, and slow-motion.
- * Each call sets per-session state that decays once per frame.
- * Stacking rule: longer duration wins; for magnitude params the latest call wins.
- * Spam-calling is safe.
- */
 declare namespace effect {
   /**
-   * Freezes `_update` for `time` seconds. `_draw` keeps running.
-   * If a longer hitstop is already in flight this call is a no-op.
+   * Freezes the game's `_update` loop for `time` seconds. `_draw` keeps
+   * running so the world stays on-screen. The classic juice trick for
+   * weighty hits: pair with `effect.screen_shake` and `effect.flash` on
+   * impact. If a longer hitstop is already in flight, this call is a
+   * no-op (longer wins).
+   * @param time  seconds to freeze update
    */
   function hitstop(time: number): void;
-
   /**
-   * Shakes the rendered view for `time` seconds by up to `intensity`
-   * game-pixels. Magnitude decays linearly to zero.
-   * @param intensity maximum offset in game pixels (try 2–6)
+   * Shakes the rendered view for `time` seconds with up to `intensity`
+   * game-pixel offset. Magnitude decays linearly to zero across the
+   * duration. The shake is applied to the RT-to-screen blit, so
+   * overlays drawn outside the world (error overlay) stay
+   * stable.
+   * @param time  seconds to shake
+   * @param intensity  maximum offset in game pixels (try 2-6)
    */
   function screen_shake(time: number, intensity: number): void;
-
   /**
-   * Flashes a full-screen palette color overlay for `time` seconds.
-   * Alpha decays linearly from opaque to transparent.
+   * Flashes a full-screen overlay of palette color `color` over the
+   * rendered view for `time` seconds. Alpha decays linearly from
+   * opaque to transparent. White on hits, red on damage, etc.
+   * @param time  seconds the flash is visible
+   * @param color  a gfx.COLOR_* constant
    */
   function flash(time: number, color: number): void;
-
   /**
-   * Scales the `dt` passed to `_update` for `time` seconds.
-   * `scale = 0.5` is half-speed; `scale > 1` plays faster.
-   * The slow-mo timer counts down at real (wall-clock) time.
+   * Scales the `dt` passed to `_update` for `time` seconds. `scale=0.5`
+   * is half-speed; `scale=0` freezes update (use `effect.hitstop` for
+   * that explicitly); `scale>1` plays faster. Wall-clock decay is
+   * unaffected; the slow_mo timer itself counts down at real time.
+   * @param time  seconds the scale is applied
+   * @param scale  dt multiplier; 0..1 for slow, >1 for fast
    */
   function slow_mo(time: number, scale: number): void;
-
   /**
-   * Cancels every active effect immediately.
-   * Useful on game-over or scene transitions. Reset / F5 call this internally.
+   * Cancels every active effect immediately (hitstop, screen_shake,
+   * flash, slow_mo). Useful on game-over, scene transitions, or
+   * anywhere lingering juice would clash with the new state. Reset and
+   * F5 / Ctrl+R already call this internally; this is the manual
+   * escape hatch.
    */
   function stop(): void;
-}
-
-// ---------------------------------------------------------------------------
-// Game callbacks
-// ---------------------------------------------------------------------------
-
-/** Engine config returned by `_config()`. All fields are optional except `game_id` when using save/load. */
-interface UsagiConfig {
-  /** Display name — window title and (slugged) export names. Defaults to the project directory name. */
-  name?: string;
-  /**
-   * `false` (default): any scale that fits the window while preserving aspect ratio.
-   * `true`: integer scale only with letterbox bars.
-   */
-  pixel_perfect?: boolean;
-  /** Reverse-DNS identifier (e.g. `"com.you.mygame"`), required for `usagi.save` / `usagi.load`. */
-  game_id?: string;
-  /** 1-based tile index into `sprites.png` for the window icon (same indexing as `gfx.spr`). */
-  icon?: number;
-  /** Game render width in pixels. Default 320. Tested range 160..640. */
-  game_width?: number;
-  /** Game render height in pixels. Default 180. Tested range 90..360. */
-  game_height?: number;
-  /**
-   * Side length in pixels of one cell in `sprites.png`. Default 16.
-   * Drives `gfx.spr` indexing, the tilepicker tool grid, and the icon slicer.
-   * `sprites.png` must be a multiple of this value on both axes.
-   */
-  sprite_size?: number;
-  /**
-   * `true` (default): engine handles Esc/P/Enter/Start to open the built-in pause overlay.
-   * `false`: those keys flow through to user code for custom menus.
-   */
-  pause_menu?: boolean;
 }
 
 /**
