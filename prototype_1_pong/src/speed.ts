@@ -71,8 +71,7 @@ export function _update(dt: number) {
   if (bouncedOffWall) {
     maybeJuice();
     State.ballAngle = -State.ballAngle;
-    State.ballSpeed *= 1.02;
-    State.paddleSpeed *= 1.02;
+    speedUp();
     sfx.play("bup");
   }
 
@@ -100,6 +99,11 @@ export function _update(dt: number) {
   }
 
   bounceOffPaddles();
+}
+
+function speedUp() {
+  State.ballSpeed += 10;
+  State.paddleSpeed += 10;
 }
 
 function bounceOffPaddles() {
@@ -141,8 +145,7 @@ function bounceOffPaddles() {
       effect.hitstop(0.1);
     }
     maybeJuice();
-    State.ballSpeed *= 1.02;
-    State.paddleSpeed *= 1.02;
+    speedUp();
     sfx.play("bip");
   }
 }
