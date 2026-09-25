@@ -434,23 +434,28 @@ export function _draw() {
   drawPong();
 
   if (State.battle.state === "battle") {
+    const rectW = usagi.GAME_W - 5 * 2;
+    const rectH = usagi.GAME_H - 5 * 2;
+
     const { phase } = State.battle;
     switch (phase[0]) {
       case "init": {
         const anim = util.remap(phase[1].timeLeft, BATTLE_INTRO_TIME, 0, 0, 1);
-        const x = util.lerp(usagi.GAME_W / 2, 10, anim);
-        const y = util.lerp(usagi.GAME_H / 2, 10, anim);
-        const w = util.lerp(0, usagi.GAME_W - 10 * 2, anim);
-        const h = util.lerp(0, usagi.GAME_H - 10 * 2, anim);
-        gfx.rect_fill(x, y, w, h, gfx.COLOR_DARK_BLUE);
+        const x = util.lerp(usagi.GAME_W / 2, 5, anim);
+        const y = util.lerp(usagi.GAME_H / 2, 5, anim);
+        const w = util.lerp(0, rectW, anim);
+        const h = util.lerp(0, rectH, anim);
+        gfx.rect_fill(x, y, w, h, gfx.COLOR_DARK_BLUE, 0.5);
         break;
       }
       case "choose":
+        gfx.rect_fill(5, 5, rectW, rectH, gfx.COLOR_DARK_BLUE, 0.5);
         drawEnemy(State.battle.enemyHp);
         drawBattleMenus(phase[1].cursor);
         drawPlayerStatus(State.battle);
         break;
       case "resolve":
+        gfx.rect_fill(5, 5, rectW, rectH, gfx.COLOR_DARK_BLUE, 0.5);
         drawEnemy(State.battle.enemyHp);
         drawCombatResolution(phase[1].resolution[phase[1].index]);
         drawPlayerStatus(State.battle);
@@ -465,6 +470,7 @@ const BG_W = 120;
 const BG_H = 104;
 
 function drawEnemy(hp: number) {
+  // draw backdrop
   gfx.sspr_ex(
     // src
     0,
