@@ -1,4 +1,4 @@
-/* eslint-disable unicorn/consistent-destructuring */
+/* eslint-disable @typescript-eslint/prefer-destructuring, unicorn/consistent-destructuring */
 import { assertNever } from "./util";
 
 export type GameState = {
@@ -19,19 +19,39 @@ export type GameState = {
   battle: RPGMode;
 };
 
+const BATTLE_INTRO_TIME = 1;
+const MESSAGE_TIME = 1.5; // seconds
+const ENEMY_HP = 10;
+const SHOW_ENEMY_HP = true;
+
+const COMBAT_OPTIONS = ["Attack", "Defend", "Magic", "Run"] as const;
+type Action = (typeof COMBAT_OPTIONS)[number];
+
+type ResolutionStep = {
+  message: string;
+  endState: { playerHp: number; playerMp: number; enemyHp: number };
+  effects?: () => void;
+};
+
+type CombatRoundOutcome = "lose" | "win" | "continue";
+
+type CombatRoundResolution = [ResolutionStep[], CombatRoundOutcome];
+
 type RPGMode = { state: "none" } | BattleMode;
 type BattleMode = {
   state: "battle";
   player: "1" | "2";
-  initializedAt: number;
-  cursor: number;
-  magicMenu: boolean;
   enemyHp: number;
+  phase:
+    | ["init", { timeLeft: number }]
+    | ["choose", { cursor: number }]
+    | [
+        "resolve",
+        { resolution: ResolutionStep[]; outcome: CombatRoundOutcome; index: number; timer: number },
+      ];
 };
 
 declare let State: GameState;
-
-const initTime = 1; // seconds
 
 const paddleHeight = 30;
 const paddleWidth = 5;
@@ -41,8 +61,6 @@ const ballSize = 6;
 const maxBounceAngle = math.rad(75);
 const borderSize = 3;
 const textScale = 2;
-
-const options = ["Attack", "Defend", "Magic", "Run"];
 
 // F5 to reset
 export function _init() {
@@ -79,18 +97,167 @@ export function _update(dt: number) {
 }
 
 function updateBattle(dt: number, state: BattleMode) {
-  if (usagi.elapsed < state.initializedAt + initTime) {
-    return;
+  switch (state.phase[0]) {
+    case "init":
+      state.phase[1].timeLeft -= dt;
+      if (state.phase[1].timeLeft < 0) {
+        state.phase = ["choose", { cursor: 0 }];
+      }
+      break;
+    case "choose": {
+      const up = state.player === "1" ? input.KEY_W : input.KEY_UP;
+      const down = state.player === "1" ? input.KEY_S : input.KEY_DOWN;
+      const confirm = state.player === "1" ? input.KEY_D : input.KEY_RIGHT;
+      if (input.key_pressed(up)) {
+        state.phase[1].cursor -= 1;
+        if (state.phase[1].cursor < 0) state.phase[1].cursor = COMBAT_OPTIONS.length - 1;
+      } else if (input.key_pressed(down)) {
+        state.phase[1].cursor = (state.phase[1].cursor + 1) % COMBAT_OPTIONS.length;
+      } else if (input.key_pressed(confirm)) {
+        const [resolution, outcome] = generateCombatResolution(
+          COMBAT_OPTIONS[state.phase[1].cursor],
+          state,
+        );
+        state.phase = ["resolve", { resolution, outcome, index: 0, timer: MESSAGE_TIME }];
+      }
+      break;
+    }
+    case "resolve":
+      break;
+    default:
+      assertNever(state.phase);
+  }
+}
+
+function generateCombatResolution(playerAction: Action, battle: BattleMode): CombatRoundResolution {
+  const resolution: ResolutionStep[] = [];
+
+  const initHp = battle.player === "1" ? State.player1Hp : State.player2Hp;
+  const initMp = battle.player === "1" ? State.player1Mp : State.player2Mp;
+
+  let enemyHp = battle.enemyHp;
+
+  switch (playerAction) {
+    case "Attack": {
+      const damage = math.random(1, 3);
+      enemyHp -= damage;
+      resolution.push({
+        message: `Paddle attacks!\nBall took ${damage} damage.`,
+        endState: { playerHp: initHp, playerMp: initMp, enemyHp },
+        effects: () => {
+          sfx.play("rpg-player-attack");
+        },
+      });
+      break;
+    }
+    case "Defend":
+      resolution.push({
+        message: `Paddle defends!`,
+        endState: { playerHp: initHp, playerMp: initMp, enemyHp },
+      });
+      break;
+    case "Magic": {
+      if (math.random() > 0.5) {
+        // heal
+        if (initMp < 2) {
+          resolution.push({
+            message: `Paddle tries to cast Heal!\nNot enough MP!`,
+            endState: { playerHp: initHp, playerMp: initMp, enemyHp },
+          });
+        } else {
+          const heal = math.random(2, 4);
+          resolution.push({
+            message: `Paddle casts Heal!\nPaddle healed ${heal} HP.`,
+            endState: { playerHp: initHp + heal, playerMp: initMp - 2, enemyHp },
+            effects: () => {
+              sfx.play("heal");
+            },
+          });
+        }
+      } else {
+        // eslint-disable-next-line no-lonely-if
+        if (initMp < 2) {
+          resolution.push({
+            message: `Paddle tries to cast Flame!\nNot enough MP!`,
+            endState: { playerHp: initHp, playerMp: initMp, enemyHp },
+          });
+        } else {
+          const damage = math.random(2, 4);
+          enemyHp -= damage;
+          resolution.push({
+            message: `Paddle casts Flame!\nBall took ${damage} damage.`,
+            endState: { playerHp: initHp, playerMp: initMp - 2, enemyHp },
+            effects: () => {
+              sfx.play("flamespell");
+            },
+          });
+        }
+      }
+      break;
+    }
+    case "Run":
+      resolution.push({
+        message: `Paddle tries to run away!\nBut it has no feet!`,
+        endState: { playerHp: initHp, playerMp: initMp, enemyHp },
+      });
+      break;
+    default:
+      assertNever(playerAction);
   }
 
-  if (input.key_pressed(input.KEY_W) || input.key_pressed(input.KEY_UP)) {
-    state.cursor -= 1;
-    if (state.cursor < 0) state.cursor = options.length - 1;
-  } else if (input.key_pressed(input.KEY_S) || input.key_pressed(input.KEY_DOWN)) {
-    state.cursor = (state.cursor + 1) % options.length;
-  } else if (input.key_pressed(input.KEY_SPACE)) {
-    //
+  if (enemyHp <= 0) {
+    resolution.push({
+      message: `Ball was vanquished.`,
+      endState: { playerHp: initHp, playerMp: initMp, enemyHp: 0 },
+      effects: () => {
+        music.play("victory");
+      },
+    });
+
+    return [resolution, "win"];
   }
+
+  const roll = math.random();
+  if (roll < 0.5) {
+    const damage = math.random(1, 3);
+    enemyHp -= damage;
+    resolution.push({
+      message: `Ball attacks!\nPaddle took ${damage} damage.`,
+      endState: { playerHp: initHp - damage, playerMp: initMp, enemyHp },
+      effects: () => {
+        sfx.play("rpg-enemy-attack");
+      },
+    });
+  } else if (roll < 0.8) {
+    resolution.push({
+      message: `Ball defends!`,
+      endState: { playerHp: initHp, playerMp: initMp, enemyHp },
+    });
+  } else if (roll < 0.9) {
+    resolution.push({
+      message: `Ball is assessing the situation.`,
+      endState: { playerHp: initHp, playerMp: initMp, enemyHp },
+    });
+  } else {
+    resolution.push({
+      message: `Ball looks frightened.`,
+      endState: { playerHp: initHp, playerMp: initMp, enemyHp },
+    });
+  }
+
+  if (resolution.at(-1)!.endState.playerHp <= 0) {
+    resolution.at(-1)!.endState.playerHp = 0;
+    resolution.push({
+      message: `Paddle was defeated...`,
+      endState: { playerHp: 0, playerMp: initMp, enemyHp },
+      effects: () => {
+        music.play("death");
+      },
+    });
+    return [resolution, "lose"];
+  }
+
+  return [resolution, "continue"];
 }
 
 function updateNormal(dt: number) {
@@ -159,20 +326,18 @@ function bounceOffPaddles() {
     State.battle = {
       state: "battle",
       player: "1",
-      initializedAt: usagi.elapsed,
-      cursor: 0,
-      magicMenu: false,
-      enemyHp: 10,
+      enemyHp: ENEMY_HP,
+      phase: ["init", { timeLeft: BATTLE_INTRO_TIME }],
     };
     music.play("battle");
 
     // TODO
-    const ballYPaddleYDelta =
-      (State.paddle1Y + paddleHeight / 2 - State.ballY + ballSize / 2) / (paddleHeight / 2);
+    // const ballYPaddleYDelta =
+    //   (State.paddle1Y + paddleHeight / 2 - State.ballY + ballSize / 2) / (paddleHeight / 2);
 
-    State.ballAngle = util.clamp(ballYPaddleYDelta, -1, 1) * -1 * maxBounceAngle;
-    State.ballX = paddleOffsetFromEdge + paddleWidth;
-    sfx.play("bip");
+    // State.ballAngle = util.clamp(ballYPaddleYDelta, -1, 1) * -1 * maxBounceAngle;
+    // State.ballX = paddleOffsetFromEdge + paddleWidth;
+    // sfx.play("bip");
   }
 
   // right
@@ -186,26 +351,133 @@ function bounceOffPaddles() {
     State.battle = {
       state: "battle",
       player: "2",
-      initializedAt: usagi.elapsed,
-      cursor: 0,
-      magicMenu: false,
-      enemyHp: 10,
+      enemyHp: ENEMY_HP,
+      phase: ["init", { timeLeft: BATTLE_INTRO_TIME }],
     };
     music.play("battle");
 
     // TODO
-    const ballYPaddleYDelta =
-      (State.paddle2Y + paddleHeight / 2 - State.ballY + ballSize / 2) / (paddleHeight / 2);
+    // const ballYPaddleYDelta =
+    //   (State.paddle2Y + paddleHeight / 2 - State.ballY + ballSize / 2) / (paddleHeight / 2);
 
-    State.ballAngle = math.pi - util.clamp(ballYPaddleYDelta, -1, 1) * -1 * maxBounceAngle;
-    State.ballX = usagi.GAME_W - paddleOffsetFromEdge - ballSize;
-    sfx.play("bip");
+    // State.ballAngle = math.pi - util.clamp(ballYPaddleYDelta, -1, 1) * -1 * maxBounceAngle;
+    // State.ballX = usagi.GAME_W - paddleOffsetFromEdge - ballSize;
+    // sfx.play("bip");
   }
 }
 
 export function _draw() {
   gfx.clear(gfx.COLOR_BLACK);
 
+  drawPong();
+
+  if (State.battle.state === "battle") {
+    const { phase } = State.battle;
+    switch (phase[0]) {
+      case "init": {
+        const anim = util.remap(phase[1].timeLeft, BATTLE_INTRO_TIME, 0, 0, 1);
+        const x = util.lerp(usagi.GAME_W / 2, 10, anim);
+        const y = util.lerp(usagi.GAME_H / 2, 10, anim);
+        const w = util.lerp(0, usagi.GAME_W - 10 * 2, anim);
+        const h = util.lerp(0, usagi.GAME_H - 10 * 2, anim);
+        gfx.rect_fill(x, y, w, h, gfx.COLOR_DARK_BLUE);
+        break;
+      }
+      case "choose":
+        drawEnemy(State.battle.enemyHp);
+        drawBattleMenus(phase[1].cursor);
+        drawPlayerStatus(State.battle);
+        break;
+      case "resolve":
+        drawEnemy(State.battle.enemyHp);
+        drawCombatResolution(phase[1].resolution[phase[1].index]);
+        drawPlayerStatus(State.battle);
+        break;
+      default:
+        assertNever(phase);
+    }
+  }
+}
+
+const BG_W = 120;
+const BG_H = 104;
+
+function drawEnemy(hp: number) {
+  gfx.sspr_ex(
+    // src
+    0,
+    0,
+    BG_W,
+    BG_H,
+    // dest
+    usagi.GAME_W / 2 - BG_W / 2,
+    5,
+    BG_W,
+    BG_H,
+    false,
+    false,
+    0,
+    gfx.COLOR_TRUE_WHITE,
+    1.0,
+  );
+
+  // "enemy" shadow
+  gfx.rect_fill(
+    usagi.GAME_W / 2 - 9,
+    usagi.GAME_H / 2 - 5,
+    18,
+    4,
+    gfx.COLOR_BLACK,
+    util.lerp(0.35, 0.39, math.sin(usagi.elapsed * 5)),
+  );
+  // "enemy" body
+  gfx.rect_fill(
+    usagi.GAME_W / 2 - 10,
+    usagi.GAME_H / 2 - 30 + math.sin(usagi.elapsed * 5),
+    20,
+    20,
+    gfx.COLOR_WHITE,
+  );
+
+  if (SHOW_ENEMY_HP) {
+    const [w] = usagi.measure_text(hp.toString());
+    gfx.text(hp.toString(), usagi.GAME_W / 2 - w / 2, usagi.GAME_H / 2 - 50, gfx.COLOR_RED);
+  }
+}
+
+function drawBattleMenus(cursor: number) {
+  // bottom text
+  gfx.rect_fill(5, 10 + BG_H + 5, usagi.GAME_W - 10, 55, gfx.COLOR_BLACK);
+  gfx.rect_ex(5, 10 + BG_H + 5, usagi.GAME_W - 10, 55, 3, gfx.COLOR_LIGHT_GRAY);
+  gfx.text("A BALL draws near!\nCommand?", 12, 10 + BG_H + 10, gfx.COLOR_WHITE);
+
+  // command
+  gfx.rect_fill(5, 5, 70, 104, gfx.COLOR_BLACK);
+  gfx.rect_ex(5, 5, 70, 104, 3, gfx.COLOR_LIGHT_GRAY);
+  for (const [i, opt] of COMBAT_OPTIONS.entries()) {
+    gfx.text(opt, 20, 12 + i * 12, gfx.COLOR_WHITE);
+  }
+  gfx.text(">", 12, 12 + 12 * cursor, gfx.COLOR_WHITE);
+}
+
+function drawCombatResolution(step: ResolutionStep) {
+  gfx.rect_fill(5, 10 + BG_H + 5, usagi.GAME_W - 10, 55, gfx.COLOR_BLACK);
+  gfx.rect_ex(5, 10 + BG_H + 5, usagi.GAME_W - 10, 55, 3, gfx.COLOR_LIGHT_GRAY);
+  gfx.text(step.message, 12, 10 + BG_H + 10, gfx.COLOR_WHITE);
+}
+
+function drawPlayerStatus(battleState: BattleMode) {
+  const statsX = usagi.GAME_W - 70;
+  const hp = battleState.player === "1" ? State.player1Hp : State.player2Hp;
+  const mp = battleState.player === "1" ? State.player1Mp : State.player2Mp;
+  gfx.rect_fill(statsX - 5, 5, 70, 104, gfx.COLOR_BLACK);
+  gfx.rect_ex(statsX - 5, 5, 70, 104, 3, gfx.COLOR_LIGHT_GRAY);
+  gfx.text("Paddle", statsX + 5, 12, gfx.COLOR_WHITE);
+  gfx.text(`HP ${hp}`, statsX + 5, 24, gfx.COLOR_WHITE);
+  gfx.text(`MP ${mp}`, statsX + 5, 36, gfx.COLOR_WHITE);
+}
+
+function drawPong() {
   const { ballX, ballY, paddle1Y, paddle2Y, p1Score, p2Score } = State;
 
   // center line
@@ -226,64 +498,5 @@ export function _draw() {
     // draw paddles
     gfx.rect_fill(paddleOffsetFromEdge, paddle1Y, paddleWidth, paddleHeight, gfx.COLOR_WHITE);
     gfx.rect_fill(usagi.GAME_W - paddleOffsetFromEdge, paddle2Y, paddleWidth, paddleHeight, gfx.COLOR_WHITE);
-  }
-
-  if (State.battle.state === "battle") {
-    // TODO: initial anim
-
-    // const anim = usagi.elapsed - State.battle.initializedAt;
-    // if (anim < initTime) {
-    //   const x = util.lerp(usagi.GAME_W / 2, 10, anim);
-    //   const y = util.lerp(usagi.GAME_H / 2, 10, anim);
-    //   const w = util.lerp(0, usagi.GAME_W - 10 * 2, anim);
-    //   const h = util.lerp(0, usagi.GAME_H - 10 * 2, anim);
-    //   gfx.rect_fill(x, y, w, h, gfx.COLOR_DARK_BLUE);
-    //   return;
-    // }
-    // gfx.rect_fill(10, 10, usagi.GAME_W - 20, usagi.GAME_H - 20, gfx.COLOR_DARK_BLUE);
-
-    const BG_W = 120;
-    const BG_H = 104;
-    gfx.sspr_ex(
-      // src
-      0,
-      0,
-      BG_W,
-      BG_H,
-      // dest
-      usagi.GAME_W / 2 - BG_W / 2,
-      10,
-      BG_W,
-      BG_H,
-      false,
-      false,
-      0,
-      gfx.COLOR_TRUE_WHITE,
-      1.0,
-    );
-    gfx.rect_fill(usagi.GAME_W / 2 - 10, usagi.GAME_H / 2 - 30, 20, 20, gfx.COLOR_WHITE);
-
-    // bottom text
-    gfx.rect_fill(5, 10 + BG_H + 5, usagi.GAME_W - 10, 55, gfx.COLOR_BLACK);
-    gfx.rect_ex(5, 10 + BG_H + 5, usagi.GAME_W - 10, 55, 3, gfx.COLOR_LIGHT_GRAY);
-    gfx.text("A BALL draws near!\nCommand?", 12, 10 + BG_H + 10, gfx.COLOR_WHITE);
-
-    // command
-    gfx.rect_fill(5, 5, 60, 100, gfx.COLOR_BLACK);
-    gfx.rect_ex(5, 5, 60, 100, 3, gfx.COLOR_LIGHT_GRAY);
-    for (const [i, opt] of options.entries()) {
-      gfx.text(opt, 20, 12 + i * 12, gfx.COLOR_WHITE);
-    }
-    gfx.text(">", 12, 12 + 12 * State.battle.cursor, gfx.COLOR_WHITE);
-
-    // stats
-    const statsX = usagi.GAME_W - 60;
-    const hp = State.battle.player === "1" ? State.player1Hp : State.player2Hp;
-    const mp = State.battle.player === "1" ? State.player1Mp : State.player2Mp;
-    gfx.rect_fill(statsX - 5, 5, 60, 100, gfx.COLOR_BLACK);
-    gfx.rect_ex(statsX - 5, 5, 60, 100, 3, gfx.COLOR_LIGHT_GRAY);
-    gfx.text("Hero", statsX + 5, 12, gfx.COLOR_WHITE);
-    gfx.text(`HP ${hp}`, statsX + 5, 24, gfx.COLOR_WHITE);
-    gfx.text(`MP ${mp}`, statsX + 5, 36, gfx.COLOR_WHITE);
   }
 }
