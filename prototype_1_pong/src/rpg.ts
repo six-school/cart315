@@ -20,6 +20,7 @@ export type GameState = {
 };
 
 const BATTLE_INTRO_TIME = 1;
+const MESSAGE_PRE_TIME = 0.4; // seconds
 const MESSAGE_TIME = 1.5; // seconds
 const ENEMY_HP = 10;
 const SHOW_ENEMY_HP = true;
@@ -37,6 +38,13 @@ type CombatRoundOutcome = "lose" | "win" | "continue";
 
 type CombatRoundResolution = [ResolutionStep[], CombatRoundOutcome];
 
+type CombatRoundUIState = {
+  resolution: ResolutionStep[];
+  outcome: CombatRoundOutcome;
+  index: number;
+  messageState: ["predisplay", number] | ["display", number];
+};
+
 type RPGMode = { state: "none" } | BattleMode;
 type BattleMode = {
   state: "battle";
@@ -45,10 +53,7 @@ type BattleMode = {
   phase:
     | ["init", { timeLeft: number }]
     | ["choose", { cursor: number }]
-    | [
-        "resolve",
-        { resolution: ResolutionStep[]; outcome: CombatRoundOutcome; index: number; timer: number },
-      ];
+    | ["resolve", CombatRoundUIState];
 };
 
 declare let State: GameState;
@@ -64,6 +69,7 @@ const textScale = 2;
 
 // F5 to reset
 export function _init() {
+  music.stop();
   State = {
     mode: "rpg",
     paddle1Y: usagi.GAME_H / 2 - paddleHeight / 2,
@@ -118,14 +124,70 @@ function updateBattle(dt: number, state: BattleMode) {
           COMBAT_OPTIONS[state.phase[1].cursor],
           state,
         );
-        state.phase = ["resolve", { resolution, outcome, index: 0, timer: MESSAGE_TIME }];
+        state.phase = [
+          "resolve",
+          { resolution, outcome, index: 0, messageState: ["predisplay", MESSAGE_PRE_TIME] },
+        ];
       }
       break;
     }
     case "resolve":
+      updateCombatStepResolution(dt, state.phase[1], state);
       break;
     default:
       assertNever(state.phase);
+  }
+}
+
+function updateCombatStepResolution(dt: number, res: CombatRoundUIState, battle: BattleMode) {
+  const ms = res.messageState;
+  switch (ms[0]) {
+    case "predisplay":
+      ms[1] -= dt;
+
+      // predisplay done? trigger our effects, and switch to message delay
+      if (ms[1] <= 0) {
+        res.messageState = ["display", MESSAGE_TIME];
+
+        const { effects, endState } = res.resolution[res.index];
+        effects?.();
+        if (battle.player === "1") {
+          State.player1Hp = endState.playerHp;
+          State.player1Mp = endState.playerMp;
+        } else {
+          State.player2Hp = endState.playerHp;
+          State.player2Mp = endState.playerMp;
+        }
+        battle.enemyHp = endState.enemyHp;
+      }
+      break;
+    case "display":
+      ms[1] -= dt;
+
+      // display timer done? next message, predisplay
+      if (ms[1] <= 0) {
+        res.messageState = ["predisplay", MESSAGE_PRE_TIME];
+        res.index += 1;
+
+        if (res.index === res.resolution.length) {
+          switch (res.outcome) {
+            case "lose":
+              // TODO
+              break;
+            case "win":
+              // TODO
+              break;
+            case "continue":
+              battle.phase = ["choose", { cursor: 0 }];
+              break;
+            default:
+              assertNever(res.outcome);
+          }
+        }
+      }
+      break;
+    default:
+      assertNever(ms);
   }
 }
 
@@ -220,11 +282,11 @@ function generateCombatResolution(playerAction: Action, battle: BattleMode): Com
   const roll = math.random();
   if (roll < 0.5) {
     const damage = math.random(1, 3);
-    enemyHp -= damage;
     resolution.push({
       message: `Ball attacks!\nPaddle took ${damage} damage.`,
       endState: { playerHp: initHp - damage, playerMp: initMp, enemyHp },
       effects: () => {
+        effect.screen_shake(0.1, 2);
         sfx.play("rpg-enemy-attack");
       },
     });
@@ -329,7 +391,7 @@ function bounceOffPaddles() {
       enemyHp: ENEMY_HP,
       phase: ["init", { timeLeft: BATTLE_INTRO_TIME }],
     };
-    music.play("battle");
+    music.loop("battle");
 
     // TODO
     // const ballYPaddleYDelta =
@@ -354,7 +416,7 @@ function bounceOffPaddles() {
       enemyHp: ENEMY_HP,
       phase: ["init", { timeLeft: BATTLE_INTRO_TIME }],
     };
-    music.play("battle");
+    music.loop("battle");
 
     // TODO
     // const ballYPaddleYDelta =
