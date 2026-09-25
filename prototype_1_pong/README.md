@@ -1,10 +1,12 @@
-a little pong. [**play online.**](https://six-school.github.io/cart315/)
+a few pongs.
+
+[**play online here.**](https://six-school.github.io/cart315/)
 
 This runs on [Usagi Engine](https://usagiengine.com/), with [TypeScript](https://www.typescriptlang.org/) code compiled via [TypeScriptToLua](https://typescripttolua.github.io/). Sorry to be a weirdo — I've found it's a really comfortable API for small game prototypes, with hot-reloading and convenient web builds.
 
 # Developing
 
-To run or tweak the game, first download [Usagi 1.3.2](https://codeberg.org/brettchalupa/usagi/releases/tag/v1.3.2). Grab the binary for your platform and place it in `bin/`. (Untested on Windows, scripts might need to be tweaked to handle `.exe` extension, sorry!)
+To tweak and modify the game yourself, first download [Usagi 1.3.2](https://codeberg.org/brettchalupa/usagi/releases/tag/v1.3.2). Grab the binary for your platform and place it in `bin/`. (Untested on Windows, scripts might need to be tweaked to handle `.exe` extension, sorry!)
 
 You'll also need [Node.js](http://nodejs.org/) installed. If you install Node manually, you should match the version listed in [the `.node-version`](.node-version) file — but instead of installing Node directly, I recommend using [`fnm`](https://github.com/Schniz/fnm), which can automatically handle installing and switching Node versions by detecting `.node-version` files.
 
