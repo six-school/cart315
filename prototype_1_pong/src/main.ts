@@ -105,4 +105,14 @@ function drawMenu(State: MenuState) {
   for (const [i, [id, name]] of gameList.entries()) {
     gfx.text(name, 20, 15 + i * 10, gfx.COLOR_WHITE);
   }
+
+  // prettier-ignore
+  if (gameList[State.selected][0] === "rpg") {
+    gfx.text("Controls:", 5, usagi.GAME_H - 35, gfx.COLOR_LIGHT_GRAY);
+    gfx.text("Move:    W/A (Player 1)  Up/Down (Player 2)", 5, usagi.GAME_H - 25, gfx.COLOR_LIGHT_GRAY);
+    gfx.text("Confirm: D (Player 1)    Right (Player 2)", 5, usagi.GAME_H - 15, gfx.COLOR_LIGHT_GRAY);
+  } else {
+    gfx.text("Controls:", 5, usagi.GAME_H - 25, gfx.COLOR_LIGHT_GRAY);
+    gfx.text("Move: W/A (Player 1)  Up/Down (Player 2)", 5, usagi.GAME_H - 15, gfx.COLOR_LIGHT_GRAY);
+  }
 }
