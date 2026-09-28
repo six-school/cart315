@@ -83,7 +83,7 @@ function initMenu() {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-shadow
-function updateMenu(dt: number, State: MenuState) {
+function updateMenu(_dt: number, State: MenuState) {
   if (input.key_pressed(input.KEY_W) || input.key_pressed(input.KEY_UP)) {
     State.selected -= 1;
     if (State.selected < 0) State.selected = gameList.length - 1;
