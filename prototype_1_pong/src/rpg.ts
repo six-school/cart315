@@ -483,8 +483,8 @@ export function _draw() {
     switch (phase[0]) {
       case "init": {
         const anim = util.remap(phase[1].timeLeft, BATTLE_INTRO_TIME, 0, 0, 1);
-        const x = util.lerp(usagi.GAME_W / 2, 5, anim);
-        const y = util.lerp(usagi.GAME_H / 2, 5, anim);
+        const x = util.lerp(State.ballX, 5, anim);
+        const y = util.lerp(State.ballY, 5, anim);
         const w = util.lerp(0, rectW, anim);
         const h = util.lerp(0, rectH, anim);
         gfx.rect_fill(x, y, w, h, gfx.COLOR_DARK_BLUE, 0.5);
