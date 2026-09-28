@@ -14,16 +14,25 @@ export type GameState = {
 
   player1Hp: number;
   player1Mp: number;
+  player1Status?: StatusEffect;
   player2Hp: number;
   player2Mp: number;
+  player2Status?: StatusEffect;
   battle: RPGMode;
 };
 
 const BATTLE_INTRO_TIME = 1;
-const MESSAGE_PRE_TIME = 0.4; // seconds
-const MESSAGE_TIME = 1.5; // seconds
+const MESSAGE_PRE_TIME = 0.4;
+const MESSAGE_TIME = 1.5;
+const LOSS_RECOVERY_TIME = 3.0;
+
+const PLAYER_INITIAL_HP = 12;
+const PLAYER_INITIAL_MP = 5;
 const ENEMY_HP = 10;
-const SHOW_ENEMY_HP = true;
+const SHOW_ENEMY_HP = false;
+
+// [status, duration]
+type StatusEffect = ["recovering", number];
 
 const COMBAT_OPTIONS = ["Attack", "Defend", "Magic", "Run"] as const;
 type Action = (typeof COMBAT_OPTIONS)[number];
@@ -81,10 +90,10 @@ export function _init() {
     p1Score: 0,
     p2Score: 0,
 
-    player1Hp: 12,
-    player1Mp: 5,
-    player2Hp: 12,
-    player2Mp: 5,
+    player1Hp: PLAYER_INITIAL_HP,
+    player1Mp: PLAYER_INITIAL_MP,
+    player2Hp: PLAYER_INITIAL_HP,
+    player2Mp: PLAYER_INITIAL_MP,
     battle: { state: "none" },
   };
 }
@@ -139,6 +148,8 @@ function updateBattle(dt: number, state: BattleMode) {
   }
 }
 
+// play out the generated resolution for this round of combat, triggering
+// effects (sfx, screenshake) and running down message timers
 function updateCombatStepResolution(dt: number, res: CombatRoundUIState, battle: BattleMode) {
   const ms = res.messageState;
   switch (ms[0]) {
@@ -172,10 +183,37 @@ function updateCombatStepResolution(dt: number, res: CombatRoundUIState, battle:
         if (res.index === res.resolution.length) {
           switch (res.outcome) {
             case "lose":
-              // TODO
+              State.battle = { state: "none" };
+
+              // make player unable to hit ball if they lost
+              if (battle.player === "1") {
+                State.player1Status = ["recovering", LOSS_RECOVERY_TIME];
+              } else {
+                State.player2Status = ["recovering", LOSS_RECOVERY_TIME];
+              }
               break;
             case "win":
-              // TODO
+              State.battle = { state: "none" };
+
+              // just bounce ball if they won
+              if (battle.player === "1") {
+                const ballYPaddleYDelta =
+                  (State.paddle1Y + paddleHeight / 2 - State.ballY + ballSize / 2) /
+                  (paddleHeight / 2);
+
+                State.ballAngle = util.clamp(ballYPaddleYDelta, -1, 1) * -1 * maxBounceAngle;
+                State.ballX = paddleOffsetFromEdge + paddleWidth;
+                sfx.play("bip");
+              } else {
+                const ballYPaddleYDelta =
+                  (State.paddle2Y + paddleHeight / 2 - State.ballY + ballSize / 2) /
+                  (paddleHeight / 2);
+
+                State.ballAngle =
+                  math.pi - util.clamp(ballYPaddleYDelta, -1, 1) * -1 * maxBounceAngle;
+                State.ballX = usagi.GAME_W - paddleOffsetFromEdge - ballSize;
+                sfx.play("bip");
+              }
               break;
             case "continue":
               battle.phase = ["choose", { cursor: 0 }];
@@ -323,7 +361,24 @@ function generateCombatResolution(playerAction: Action, battle: BattleMode): Com
 }
 
 function updateNormal(dt: number) {
-  const { ballAngle, ballSpeed } = State;
+  const { ballAngle, ballSpeed, player1Status, player2Status } = State;
+
+  if (player1Status) {
+    player1Status[1] -= dt;
+    if (player1Status[1] <= 0) {
+      State.player1Status = undefined;
+      State.player1Hp = PLAYER_INITIAL_HP;
+      State.player1Mp = PLAYER_INITIAL_MP;
+    }
+  }
+  if (player2Status) {
+    player2Status[1] -= dt;
+    if (player2Status[1] <= 0) {
+      State.player2Status = undefined;
+      State.player2Hp = PLAYER_INITIAL_HP;
+      State.player2Mp = PLAYER_INITIAL_MP;
+    }
+  }
 
   if (input.key_held(input.KEY_W)) State.paddle1Y -= paddleSpeed * dt;
   else if (input.key_held(input.KEY_S)) State.paddle1Y += paddleSpeed * dt;
@@ -380,6 +435,7 @@ function updateNormal(dt: number) {
 function bounceOffPaddles() {
   // left
   if (
+    !State.player1Status &&
     util.rect_overlap(
       { x: State.ballX, y: State.ballY, w: ballSize, h: ballSize },
       { x: paddleOffsetFromEdge, y: State.paddle1Y, w: paddleWidth, h: paddleHeight },
@@ -392,18 +448,11 @@ function bounceOffPaddles() {
       phase: ["init", { timeLeft: BATTLE_INTRO_TIME }],
     };
     music.loop("battle");
-
-    // TODO
-    // const ballYPaddleYDelta =
-    //   (State.paddle1Y + paddleHeight / 2 - State.ballY + ballSize / 2) / (paddleHeight / 2);
-
-    // State.ballAngle = util.clamp(ballYPaddleYDelta, -1, 1) * -1 * maxBounceAngle;
-    // State.ballX = paddleOffsetFromEdge + paddleWidth;
-    // sfx.play("bip");
   }
 
   // right
   if (
+    !State.player2Status &&
     // prettier-ignore
     util.rect_overlap(
       { x: State.ballX, y: State.ballY, w: ballSize, h: ballSize },
@@ -417,14 +466,6 @@ function bounceOffPaddles() {
       phase: ["init", { timeLeft: BATTLE_INTRO_TIME }],
     };
     music.loop("battle");
-
-    // TODO
-    // const ballYPaddleYDelta =
-    //   (State.paddle2Y + paddleHeight / 2 - State.ballY + ballSize / 2) / (paddleHeight / 2);
-
-    // State.ballAngle = math.pi - util.clamp(ballYPaddleYDelta, -1, 1) * -1 * maxBounceAngle;
-    // State.ballX = usagi.GAME_W - paddleOffsetFromEdge - ballSize;
-    // sfx.play("bip");
   }
 }
 
@@ -546,7 +587,8 @@ function drawPlayerStatus(battleState: BattleMode) {
 }
 
 function drawPong() {
-  const { ballX, ballY, paddle1Y, paddle2Y, p1Score, p2Score } = State;
+  const { ballX, ballY, paddle1Y, paddle2Y, p1Score, p2Score, player1Status, player2Status } =
+    State;
 
   // center line
   for (let i = 0; i < usagi.GAME_H; i += 8) {
@@ -564,7 +606,31 @@ function drawPong() {
     gfx.text_ex(p2Score.toString(), usagi.GAME_W / 2 + borderSize + 10, 10, textScale, 0, gfx.COLOR_WHITE, 1);
 
     // draw paddles
-    gfx.rect_fill(paddleOffsetFromEdge, paddle1Y, paddleWidth, paddleHeight, gfx.COLOR_WHITE);
-    gfx.rect_fill(usagi.GAME_W - paddleOffsetFromEdge, paddle2Y, paddleWidth, paddleHeight, gfx.COLOR_WHITE);
+    gfx.rect_fill(paddleOffsetFromEdge, paddle1Y, paddleWidth, paddleHeight, gfx.COLOR_WHITE, player1Status ? 0.5 : 1);
+    gfx.rect_fill(usagi.GAME_W - paddleOffsetFromEdge, paddle2Y, paddleWidth, paddleHeight, gfx.COLOR_WHITE, player2Status ? 0.5 : 1);
+
+    if (player1Status) {
+      ellipse(paddleOffsetFromEdge + paddleWidth / 2 - 1, paddle1Y - 12, 9, 4, 2, gfx.COLOR_WHITE, 0.5)
+    }
+    if (player2Status) {
+      ellipse(usagi.GAME_W - paddleOffsetFromEdge + paddleWidth / 2 - 1, paddle2Y - 12, 9, 4, 2, gfx.COLOR_WHITE, 0.5)
+    }
+  }
+}
+
+// seems like this isn't part of usagi's api yet. not too bad to implement...
+// prettier-ignore
+function ellipse(cx: number, cy: number, rx: number, ry: number, thickness: number, color: number, alpha?: number) {
+  const ox = rx + 0.5;
+  const oy = ry + 0.5;
+  const ix = rx - thickness + 0.5;
+  const iy = ry - thickness + 0.5;
+  const hollow = ix > 0 && iy > 0;
+  for (let dy = -ry; dy <= ry; dy++) {
+    for (let dx = -rx; dx <= rx; dx++) {
+      if ((dx * dx) / (ox * ox) + (dy * dy) / (oy * oy) > 1) continue;
+      if (hollow && (dx * dx) / (ix * ix) + (dy * dy) / (iy * iy) < 1) continue;
+      gfx.px(cx + dx, cy + dy, color, alpha);
+    }
   }
 }
