@@ -79,6 +79,7 @@ const textScale = 2;
 // F5 to reset
 export function _init() {
   music.stop();
+  sfx.stop_all();
   State = {
     mode: "rpg",
     paddle1Y: usagi.GAME_H / 2 - paddleHeight / 2,
