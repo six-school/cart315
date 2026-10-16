@@ -1,0 +1,29 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "eslint",
+    "typescript",
+    "unicorn",
+    "oxc",
+    "import",
+    "node",
+    "promise",
+    "react",
+    "react-perf"
+  ],
+  "options": {
+    "typeAware": true,
+    "reportUnusedDisableDirectives": "warn"
+  },
+  "categories": {
+    "correctness": "warn",
+    "suspicious": "warn",
+  },
+  "rules": {
+    "import/no-unassigned-import": ["warn", { "allow": ["**/*.{css,svg,jpg,jpeg,avif,webp,png,gif}"] }],
+    "react/react-in-jsx-scope": "off"
+  },
+  "env": {
+    "builtin": true
+  }
+}

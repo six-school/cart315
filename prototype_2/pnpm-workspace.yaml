@@ -1,0 +1,12 @@
+minimumReleaseAge: 4320 # 3 days
+
+strictDepBuilds: true
+
+trustPolicy: no-downgrade
+trustPolicyIgnoreAfter: 8640 # 6 days
+
+blockExoticSubdeps: true
+
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true

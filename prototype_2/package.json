@@ -1,0 +1,48 @@
+{
+  "name": "mage-mash",
+  "private": "true",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=24.12.0"
+  },
+  "scripts": {
+    "start": "NODE_ENV=production node --env-file-if-exists=.env src-server/main.ts",
+    "dev": "run-p -cl dev:*",
+    "dev:be": "PORT=3001 NODE_ENV=development node --watch --env-file-if-exists=.env src-server/main.ts",
+    "dev:fe": "astro dev --port 3000",
+    "build": "astro build",
+    "test": "run-p -cl test:*",
+    "test:ts": "tsc --pretty --noEmit",
+    "test:lint": "oxlint --max-warnings=0 src src-server",
+    "test:prettier": "prettier --ignore-unknown -l '{src,src-server}/**/*'",
+    "prettier": "prettier --ignore-unknown --write '{src,src-server}/**/*'"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.4",
+    "hono": "^4.13.13",
+    "socket.io": "^4.8.4",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@astrojs/react": "^7.0.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "astro": "^7.3.8",
+    "npm-run-all": "^4.1.5",
+    "oxlint": "^1.87.0",
+    "oxlint-tsgolint": "^7.0.2004",
+    "prettier": "^3.9.10",
+    "prettier-plugin-astro": "^1.1.1",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "sharp": "^0.35.5",
+    "socket.io-client": "^4.8.4",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2"
+  },
+  "packageManager": "pnpm@11.27.1+sha512.a81d4c21b9b09a4b0aebf90ef5e527d4262bdda322d26082978cb549023ac6d9cafc98b19fffaa5c71db438a65f70224edb78d7311187861ff96480d1cdca23c"
+}
