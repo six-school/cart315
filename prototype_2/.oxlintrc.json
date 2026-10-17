@@ -20,6 +20,8 @@
     "suspicious": "warn",
   },
   "rules": {
+    "import/consistent-type-specifier-style": ["warn", "prefer-inline"],
+    "import/no-duplicates": ["warn", { "preferInline": true }],
     "import/no-unassigned-import": ["warn", { "allow": ["**/*.{css,svg,jpg,jpeg,avif,webp,png,gif}"] }],
     "react/react-in-jsx-scope": "off"
   },
