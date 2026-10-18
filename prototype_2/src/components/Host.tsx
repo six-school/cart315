@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 
-import { socket } from "./host";
+import { socket } from "./client";
 
-import { type ServerToHostMessages } from "~/shared";
+import type { ServerToHostMessages } from "~/shared";
 
 export const Host = () => {
   const [connected, setConnected] = useState(socket.connected);

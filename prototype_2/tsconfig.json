@@ -4,6 +4,8 @@
   "exclude": ["dist"],
   "compilerOptions": {
     "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "paths": { "~/*": ["./src/*"] },

@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-import { socket } from "./host";
-import { type ServerToPlayerMessages } from "~/shared";
+import { socket } from "./client";
+import type { ServerToPlayerMessages } from "~/shared";
 
 export const Player = () => {
   const [connected, setConnected] = useState(socket.connected);
