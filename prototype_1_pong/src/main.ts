@@ -28,7 +28,6 @@ _config = () => {
 // F5 to reset
 _init = () => {
   music.stop();
-  sfx.stop_all();
   initMenu();
   // (require("./rpg") as typeof import("./rpg"))._init();
 };
