@@ -45,8 +45,6 @@ type ResolutionStep = {
 
 type CombatRoundOutcome = "lose" | "win" | "continue";
 
-type CombatRoundResolution = [ResolutionStep[], CombatRoundOutcome];
-
 type CombatRoundUIState = {
   resolution: ResolutionStep[];
   outcome: CombatRoundOutcome;
@@ -230,7 +228,10 @@ function updateCombatStepResolution(dt: number, res: CombatRoundUIState, battle:
   }
 }
 
-function generateCombatResolution(playerAction: Action, battle: BattleMode): CombatRoundResolution {
+function generateCombatResolution(
+  playerAction: Action,
+  battle: BattleMode,
+): [ResolutionStep[], CombatRoundOutcome] {
   const resolution: ResolutionStep[] = [];
 
   const initHp = battle.player === "1" ? State.player1Hp : State.player2Hp;
