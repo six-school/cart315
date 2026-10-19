@@ -1,0 +1,26 @@
+{
+  "name": "usagi-test",
+  "private": "true",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "run-p -l dev:*",
+    "dev:tstl": "tstl --watch",
+    "dev:usagi": "./bin/usagi dev game",
+    "build": "tstl && ./bin/usagi export --target web --output export/web.zip game",
+    "test": "run-p -cl test:*",
+    "test:ts": "tsc --pretty --noEmit",
+    "test:eslint": "eslint --color --max-warnings=0 '{src,scripts}/**/*'",
+    "test:prettier": "prettier '{src,scripts}/**/*' -l",
+    "prettier": "prettier '{src,scripts}/**/*' --write"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.4",
+    "eslint-config-lostfictions": "8.1.1",
+    "lua-types": "^2.14.1",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.9.6",
+    "typescript": "~5.9.3",
+    "typescript-to-lua": "^1.37.1"
+  },
+  "packageManager": "pnpm@11.28.6+sha512.55d90390c3b39042f1505a2697789f0256c6d95bb28bdd7cb731af1887c9f2629ef581acb9f4e4ec772024c8203c2aed22a03299b97103fdcf32668e905d0024"
+}
