@@ -4,6 +4,7 @@ import { socket } from "./client";
 
 import type { ServerToHostMessages } from "~/shared";
 import {
+  drawText,
   makeLoader,
   playSound,
   resizeCanvas,
@@ -60,10 +61,10 @@ export const Main = () => {
   );
 };
 
-const load = makeLoader(
-  { bgs: bgs.src, mages: mages.src, enemies: enemies.src },
-  {/* bounce: "TODO" */},
-);
+const load = makeLoader({
+  images: { bgs: bgs.src, mages: mages.src, enemies: enemies.src },
+  sounds: {/* bounce: "TODO" */},
+});
 
 type Assets = InferAssets<typeof load>;
 
@@ -127,7 +128,10 @@ function PixelCanvas() {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     const sprite = spriteRef.current;
-    const [{ bgs, mages, enemies }, sounds] = assets;
+    const {
+      images: { bgs, mages, enemies },
+      sounds,
+    } = assets;
 
     let rafId = 0;
     let last = performance.now();
@@ -159,8 +163,8 @@ function PixelCanvas() {
 
       ctx.drawImage(bgs, 0, 0, 256, 151, 0, 0, LOGICAL_W, LOGICAL_H);
 
-      // round to pixels
-      ctx.drawImage(mages, 0, 0, 30, 30, Math.round(sprite.x), Math.round(sprite.y), 30, 30);
+      drawText(ctx, "buttz", sprite.x + 30 / 2, sprite.y - 8, { font: "Pixel", align: "center" });
+      ctx.drawImage(mages, 0, 0, 30, 30, sprite.x, sprite.y, 30, 30);
     };
 
     const frame = (now: number) => {

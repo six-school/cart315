@@ -37,6 +37,13 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+async function loadFont(src: string, family: string): Promise<FontFace> {
+  const face = new FontFace(family, `url(${src})`);
+  await face.load();
+  document.fonts.add(face);
+  return face;
+}
+
 async function loadAudio(src: string): Promise<AudioBuffer> {
   const res = await fetch(src);
   if (!res.ok) throw new Error(`Failed to load ${src}: ${res.status}`);
@@ -45,27 +52,38 @@ async function loadAudio(src: string): Promise<AudioBuffer> {
 
 async function loadAll<K extends string, T>(
   srcs: Record<K, string>,
-  load: (src: string) => Promise<T>,
+  load: (src: string, name: K) => Promise<T>,
 ): Promise<Record<K, T>> {
   const entries = await Promise.all(
-    Object.entries<string>(srcs).map(async ([name, src]) => [name, await load(src)] as const),
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    (Object.entries(srcs) as [K, string][]).map(
+      async ([name, src]) => [name, await load(src, name)] as const,
+    ),
   );
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return Object.fromEntries(entries) as Record<K, T>;
 }
 
-export const load = <KImages extends string, KSounds extends string>(
-  images: Record<KImages, string>,
-  sounds: Record<KSounds, string>,
-) => Promise.all([loadAll(images, loadImage), loadAll(sounds, loadAudio)] as const);
-
 export const makeLoader =
-  <KImages extends string, KSounds extends string>(
-    images: Record<KImages, string>,
-    sounds: Record<KSounds, string>,
-  ) =>
-  () =>
-    Promise.all([loadAll(images, loadImage), loadAll(sounds, loadAudio)] as const);
+  <
+    KImages extends string = never,
+    KSounds extends string = never,
+    KFonts extends string = never,
+  >(srcs: {
+    images?: Record<KImages, string>;
+    sounds?: Record<KSounds, string>;
+    fonts?: Record<KFonts, string>;
+  }) =>
+  async () => {
+    const [images, sounds, fonts] = await Promise.all([
+      // oxlint-disable typescript/no-unsafe-type-assertion
+      loadAll(srcs.images ?? ({} as Record<KImages, string>), loadImage),
+      loadAll(srcs.sounds ?? ({} as Record<KSounds, string>), loadAudio),
+      loadAll(srcs.fonts ?? ({} as Record<KFonts, string>), loadFont),
+      // oxlint-enable typescript/no-unsafe-type-assertion
+    ]);
+    return { images, sounds, fonts };
+  };
 
 export type InferAssets<T extends (...args: any) => any> = Awaited<ReturnType<T>>;
 
@@ -98,4 +116,50 @@ export function resizeCanvas(
     return true;
   }
   return false;
+}
+
+export type DrawTextOptions = {
+  font?: string;
+  size?: number;
+  color?: string;
+  align?: CanvasTextAlign;
+  shadow?: string | null;
+};
+
+const OUTLINE_OFFSETS = [
+  [-1, -1],
+  [0, -1],
+  [1, -1],
+  [-1, 0],
+  [1, 0],
+  [-1, 1],
+  [0, 1],
+  [1, 1],
+] as const;
+
+export function drawText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  {
+    font = "monospace",
+    size = 8,
+    color = "#fff",
+    align = "left",
+    shadow = "#000",
+  }: DrawTextOptions = {},
+) {
+  ctx.font = `${size}px "${font}"`;
+  ctx.textAlign = align;
+  ctx.textBaseline = "top";
+
+  if (shadow) {
+    ctx.fillStyle = shadow;
+    for (const [dx, dy] of OUTLINE_OFFSETS) {
+      ctx.fillText(text, x + dx, y + dy);
+    }
+  }
+  ctx.fillStyle = color;
+  ctx.fillText(text, x, y);
 }
