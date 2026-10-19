@@ -73,16 +73,29 @@ export function resizeCanvas(
   canvas: HTMLCanvasElement,
   ctx: CanvasRenderingContext2D,
   container: HTMLElement,
-  w: number,
-  h: number,
-): number {
+  logicalW: number,
+  logicalH: number,
+): boolean {
   const dpr = window.devicePixelRatio || 1;
   const { width, height } = container.getBoundingClientRect();
-  const scale = Math.max(1, Math.floor(Math.min((width * dpr) / w, (height * dpr) / h)));
-  canvas.width = w * scale;
-  canvas.height = h * scale;
-  canvas.style.width = `${canvas.width / dpr}px`;
-  canvas.style.height = `${canvas.height / dpr}px`;
-  ctx.imageSmoothingEnabled = false;
-  return scale;
+  const fit = Math.min((width * dpr) / logicalW, (height * dpr) / logicalH);
+
+  // round to next largest
+  const scale = Math.max(1, Math.ceil(fit));
+
+  // scale down smoothed bilinear (by browser)
+  canvas.style.width = `${Math.round(logicalW * fit) / dpr}px`;
+  canvas.style.height = `${Math.round(logicalH * fit) / dpr}px`;
+
+  const w = logicalW * scale;
+  const h = logicalH * scale;
+  if (canvas.width !== w || canvas.height !== h) {
+    // this part can trigger flickering so only set them if we need it
+    canvas.width = w;
+    canvas.height = h;
+    // gets reset on change
+    ctx.imageSmoothingEnabled = false;
+    return true;
+  }
+  return false;
 }
