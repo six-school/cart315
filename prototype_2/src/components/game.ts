@@ -213,7 +213,6 @@ function generateCombatResolution(
           });
         }
       } else {
-        // oxlint-disable-next-line no-lonely-if
         if (initMp < 2) {
           resolution.push({
             message: `Paddle tries to cast Flame!\nNot enough MP!`,
