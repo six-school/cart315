@@ -1,7 +1,6 @@
 import { noise1D } from "./noise";
 import { COLOR } from "./palette";
 import { curve, ellipse } from "./shapes";
-import { assertNever } from "./util";
 
 type GameState = {
   petX: number;
@@ -28,15 +27,20 @@ const osc = (freq: number, phase = 0) => Math.sin((t + phase) * freq * Math.PI *
 const osc01 = (freq: number, phase = 0) => (osc(freq, phase) + 1) / 2;
 
 _config = () => {
-  return { name: "pet", game_id: "com.usagiengine.SIX_PET", game_width: 640, game_height: 360 };
+  return {
+    name: "house mouse",
+    game_id: "com.usagiengine.SIX_PET",
+    game_width: 640,
+    game_height: 360,
+  };
 };
 
 // F5 to reset
 _init = () => {
   // music.stop();
   State = {
-    petX: 190,
-    petY: 120,
+    petX: 150,
+    petY: 170,
 
     bodyTemp: 0.5,
     stress: 0.2,
@@ -75,40 +79,26 @@ _draw = () => {
   const BODY_SIZE = 65;
   gfx.circ_fill(bodyX, bodyY, BODY_SIZE, COLOR.J_PERIWINKLE);
 
+  const floor = petY + 110;
   // legs
-  curve(
-    bodyX - 30,
-    bodyY + BODY_SIZE - 10,
-    bodyX - 50,
-    usagi.GAME_H - 120,
-    -0.3,
-    9,
-    COLOR.J_PERIWINKLE,
-  );
-  curve(
-    bodyX + 30,
-    bodyY + BODY_SIZE - 10,
-    bodyX + 60,
-    usagi.GAME_H - 120,
-    0.3,
-    9,
-    COLOR.J_PERIWINKLE,
-  );
-  ellipse(bodyX - 55, usagi.GAME_H - 120, 10, 5, 10, COLOR.J_PERIWINKLE);
-  ellipse(bodyX + 65, usagi.GAME_H - 120, 10, 5, 10, COLOR.J_PERIWINKLE);
+  curve(bodyX - 30, bodyY + BODY_SIZE - 10, bodyX - 50, floor, -0.3, 9, COLOR.J_PERIWINKLE);
+  curve(bodyX + 30, bodyY + BODY_SIZE - 10, bodyX + 60, floor, 0.3, 9, COLOR.J_PERIWINKLE);
+  ellipse(bodyX - 55, floor, 10, 5, 10, COLOR.J_PERIWINKLE);
+  ellipse(bodyX + 65, floor, 10, 5, 10, COLOR.J_PERIWINKLE);
 
   // head
   gfx.circ_fill(petX, y, HEAD_SIZE, COLOR.J_PERIWINKLE);
 
-  // ears
-  gfx.circ_fill(petX - 20, y - HEAD_SIZE, 30, COLOR.J_PERIWINKLE);
-  gfx.circ_fill(petX - 20, y - HEAD_SIZE - 5, 15, COLOR.N_STEEL);
-  gfx.circ_fill(petX + 46, y - HEAD_SIZE + 10, 30, COLOR.J_PERIWINKLE);
-  gfx.circ_fill(petX + 46, y - HEAD_SIZE + 5, 15, COLOR.N_STEEL);
-
-  const faceOffsetX = util.remap(noise1D(t + 12020), -1, 1, 0, -5);
+  // some fake parallax
+  const faceOffsetX = util.remap(noise1D(t + 12020), -1, 1, 0, -10);
   const faceX = petX;
   const faceY = y;
+
+  // ears
+  gfx.circ_fill(petX + 46 + faceOffsetX * 0.5, y - HEAD_SIZE + 10, 30, COLOR.J_PERIWINKLE);
+  gfx.circ_fill(petX + 46 + faceOffsetX * 0.5, y - HEAD_SIZE + 5, 15, COLOR.N_STEEL);
+  gfx.circ_fill(petX - 20 - faceOffsetX, y - HEAD_SIZE + 5, 30, COLOR.J_PERIWINKLE);
+  gfx.circ_fill(petX - 20 - faceOffsetX, y - HEAD_SIZE, 15, COLOR.N_STEEL);
 
   const eyeLeftX = faceX + faceOffsetX * 0.2 - (HEAD_SIZE - EYE_SIZE - 9);
   const eyeLeftY = faceY;
