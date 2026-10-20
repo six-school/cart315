@@ -1,11 +1,19 @@
 import { noise1D } from "./noise";
 import { COLOR } from "./palette";
-import { curve } from "./shapes";
+import { curve, ellipse } from "./shapes";
 import { assertNever } from "./util";
 
 type GameState = {
   petX: number;
   petY: number;
+
+  bodyTemp: number;
+  stress: number;
+  anxiety: number;
+  fatigue: number;
+  bankBalance: number;
+
+  apartmentTemp: number;
 };
 
 declare let State: GameState;
@@ -29,6 +37,14 @@ _init = () => {
   State = {
     petX: 190,
     petY: 120,
+
+    bodyTemp: 0.5,
+    stress: 0.2,
+    anxiety: 0.4,
+    fatigue: 0.3,
+    bankBalance: 1000,
+
+    apartmentTemp: 0.5,
   };
 };
 
@@ -59,16 +75,26 @@ _draw = () => {
   const eyeRightX = petX + (HEAD_SIZE - EYE_SIZE - 9);
   const eyeRightY = y + 5;
 
-  const bodyY = petY + (osc01(0.5, 0.34) + noise1D(t + 4325)) * 5;
-  gfx.circ_fill(petX + 20, bodyY + 70, 70, COLOR.K_GREY);
+  // body
+  const bodyX = petX + 20;
+  const bodyY = petY + 50 + (osc01(0.5, 0.34) + noise1D(t + 4325)) * 5;
+  const BODY_SIZE = 70;
+  gfx.circ_fill(bodyX, bodyY, BODY_SIZE, COLOR.M_SLATE);
+
+  // legs
+  curve(bodyX - 30, bodyY + BODY_SIZE - 10, bodyX - 50, usagi.GAME_H - 70, -0.3, 9, COLOR.M_SLATE);
+  curve(bodyX + 30, bodyY + BODY_SIZE - 10, bodyX + 60, usagi.GAME_H - 70, 0.3, 9, COLOR.M_SLATE);
+  ellipse(bodyX - 55, usagi.GAME_H - 70, 10, 5, 10, COLOR.M_SLATE);
+  ellipse(bodyX + 65, usagi.GAME_H - 70, 10, 5, 10, COLOR.M_SLATE);
 
   // head
-
   gfx.circ_fill(petX, y, HEAD_SIZE, COLOR.J_PERIWINKLE);
 
+  // ears
+  gfx.circ_fill(petX - 20, y - HEAD_SIZE, 20, COLOR.J_PERIWINKLE);
+  gfx.circ_fill(petX + 46, y - HEAD_SIZE + 10, 20, COLOR.J_PERIWINKLE);
+
   // eyes
-  gfx.line_ex(eyeLeftX - 12, eyeLeftY - 20, eyeLeftX + 12, eyeLeftY - 18, 6, PUPIL_COL);
-  gfx.line_ex(eyeRightX - 12, eyeRightY - 20, eyeRightX + 12, eyeRightY - 19, 6, PUPIL_COL);
   if (noise1D(t * 2) > 0.6) {
     gfx.line_ex(eyeLeftX - 12, eyeLeftY, eyeLeftX + 12, eyeLeftY, 4, PUPIL_COL);
     gfx.line_ex(eyeRightX - 12, eyeRightY, eyeRightX + 12, eyeRightY, 4, PUPIL_COL);
@@ -79,10 +105,15 @@ _draw = () => {
     gfx.circ_fill(eyeRightX + 4, eyeRightY, PUPIL_SIZE, PUPIL_COL);
   }
 
+  // brows
+  const concern = noise1D(t / 3 + 3924) * 0.4;
+  curve(eyeLeftX - 12, eyeLeftY - 20, eyeLeftX + 12, eyeLeftY - 18, concern, 7, PUPIL_COL);
+  curve(eyeRightX - 12, eyeRightY - 20, eyeRightX + 12, eyeRightY - 18, concern, 7, PUPIL_COL);
+
   // mouth
   const happiness = noise1D(t / 3 + 2398) * 0.4;
-  curve(petX - 25, y + 39, petX + 4, y + 41, happiness, 4, PUPIL_COL);
+  curve(petX - 30, y + 24, petX + 10, y + 28, happiness, 5, PUPIL_COL);
 
   // nose
-  gfx.tri_fill(petX - 5, y - 5, petX - 28, y + 27, petX + 5, y + 30, COLOR.F_SAGE);
+  // gfx.tri_fill(petX - 5, y - 5, petX - 28, y + 27, petX + 5, y + 30, COLOR.F_SAGE);
 };
