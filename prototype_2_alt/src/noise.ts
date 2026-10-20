@@ -1,4 +1,6 @@
 // based on https://github.com/josephg/noisejs/blob/master/perlin.js
+//
+// has some tstl-specific quirks! (no js typedarray use, assume 0 is truthy...)
 
 // Skewing / unskewing factors
 const F2 = 0.5 * (Math.sqrt(3) - 1);
@@ -8,13 +10,13 @@ const G3 = 1 / 6;
 
 // Gradient directions for 2D and 3D: the 12 edge midpoints of a cube.
 // 2D uses only the x/y components.
-const GRAD3 = new Float32Array([
+const GRAD3: number[] = [
   1, 1, 0, -1, 1, 0, 1, -1, 0, -1, -1, 0, 1, 0, 1, -1, 0, 1, 1, 0, -1, -1, 0, -1, 0, 1, 1, 0, -1, 1,
   0, 1, -1, 0, -1, -1,
-]);
+];
 
 // Ken Perlin's permutation of 0..255
-const P = [
+const P: number[] = [
   151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142,
   8, 99, 37, 240, 21, 10, 23, 190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203,
   117, 35, 11, 32, 57, 177, 33, 88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175, 74, 165,
@@ -30,18 +32,19 @@ const P = [
 ];
 
 // Doubled to avoid index wrapping
-const perm = new Uint8Array(512);
-const permMod12 = new Uint8Array(512);
+const perm: number[] = [];
+const permMod12: number[] = [];
 for (let i = 0; i < 512; i++) {
-  perm[i] = P[i & 255];
-  permMod12[i] = perm[i] % 12;
+  const v = P[i & 255];
+  perm.push(v);
+  permMod12.push(v % 12);
 }
 
 /** 1D gradient: picks one of 16 slopes (±1..±8) from the hash. */
 function grad1(hash: number, x: number): number {
   const h = hash & 15;
   let grad = 1 + (h & 7);
-  if (h & 8) grad = -grad;
+  if ((h & 8) !== 0) grad = -grad; // explicit compare: 0 is truthy in Lua
   return grad * x;
 }
 
