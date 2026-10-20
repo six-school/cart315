@@ -27,7 +27,7 @@ _init = () => {
   // music.stop();
   State = {
     petX: 190,
-    petY: 40,
+    petY: 120,
   };
 };
 
@@ -40,25 +40,33 @@ _update = (dt: number) => {
   // TODO: game logic
 };
 
+const HEAD_SIZE = 60;
+const EYE_SIZE = 12;
+const EYE_COL = COLOR.B_PEACH;
+const PUPIL_SIZE = 4;
+const PUPIL_COL = COLOR.W_AUBERGINE;
+
 _draw = () => {
   gfx.clear(COLOR.Z_INK);
 
   const { petX, petY } = State;
 
-  const y = 90 + osc01(0.5) * 5;
+  const y = petY + (osc01(0.5) + noise1D(t + 1000)) * 5;
 
-  const HEAD_SIZE = 60;
-  const EYE_SIZE = 12;
-  const PUPIL_SIZE = 4;
+  const eyeLeftX = petX - (HEAD_SIZE - EYE_SIZE - 9);
+  const eyeLeftY = y;
+  const eyeRightX = petX + (HEAD_SIZE - EYE_SIZE - 9);
+  const eyeRightY = y + 5;
 
   gfx.circ_fill(petX, y, HEAD_SIZE, COLOR.E_LAVENDER);
 
-  if (noise1D(t) > 0.9) {
-    //
+  if (noise1D(t * 2) > 0.6) {
+    gfx.line_ex(eyeLeftX - 12, eyeLeftY, eyeLeftX + 12, eyeLeftY, 4, PUPIL_COL);
+    gfx.line_ex(eyeRightX - 12, eyeRightY, eyeRightX + 12, eyeRightY, 4, PUPIL_COL);
   } else {
-    gfx.circ_fill(petX - (HEAD_SIZE - EYE_SIZE - 9), y, EYE_SIZE, COLOR.B_PEACH);
-    gfx.circ_fill(petX - (HEAD_SIZE - EYE_SIZE - 9) - 4, y, PUPIL_SIZE, COLOR.W_AUBERGINE);
-    gfx.circ_fill(petX + (HEAD_SIZE - EYE_SIZE - 9), y + 5, EYE_SIZE, COLOR.B_PEACH);
-    gfx.circ_fill(petX + (HEAD_SIZE - EYE_SIZE - 9) + 4, y + 5, PUPIL_SIZE, COLOR.W_AUBERGINE);
+    gfx.circ_fill(eyeLeftX, eyeLeftY, EYE_SIZE, EYE_COL);
+    gfx.circ_fill(eyeRightX, eyeRightY, EYE_SIZE, EYE_COL);
+    gfx.circ_fill(eyeLeftX - 4, eyeLeftY, PUPIL_SIZE, PUPIL_COL);
+    gfx.circ_fill(eyeRightX + 4, eyeRightY, PUPIL_SIZE, PUPIL_COL);
   }
 };
