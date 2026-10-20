@@ -4,6 +4,10 @@
 
 [Reading Reflection 2](readings/2.md)
 
-[Prototype 1: Pong](prototype_1_pong) ([Play online](https://six-school.github.io/cart315/))
+[Prototype 1: Pong](prototype_1_pong) ([Play online](https://six-school.github.io/cart315/prototype_1_pong))
 
 [Journal 1: Implementing Pong](journal/1.md)
+
+[Prototype 2: Pet](prototype_2_alt) ([Play online](https://six-school.github.io/cart315/prototype_2_alt))
+
+[Journal 2: Hard Swerve](journal/2.md)

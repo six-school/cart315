@@ -1,6 +1,6 @@
 a few pongs.
 
-[**play online here.**](https://six-school.github.io/cart315/)
+[**play online here.**](https://six-school.github.io/cart315/prototype_1_pong)
 
 This runs on [Usagi Engine](https://usagiengine.com/), with [TypeScript](https://www.typescriptlang.org/) code compiled via [TypeScriptToLua](https://typescripttolua.github.io/). Sorry to be a weirdo — I've found it's a really comfortable API for small game prototypes, with hot-reloading and convenient web builds.
 
