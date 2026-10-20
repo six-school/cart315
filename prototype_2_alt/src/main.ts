@@ -107,7 +107,7 @@ _draw = () => {
 
   const eyeLeftX = faceX + faceOffsetX * 0.2 - (HEAD_SIZE - EYE_SIZE - 9);
   const eyeLeftY = faceY;
-  const eyeRightX = faceX + faceOffsetX + (HEAD_SIZE - EYE_SIZE - 9);
+  const eyeRightX = faceX + faceOffsetX + (HEAD_SIZE - EYE_SIZE - 20);
   const eyeRightY = faceY + 5;
 
   // eyes
