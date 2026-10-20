@@ -67,24 +67,31 @@ const PUPIL_SIZE = 7;
 const PUPIL_COL = COLOR.W_AUBERGINE;
 
 _draw = () => {
-  gfx.clear(COLOR.Z_INK);
+  gfx.clear(COLOR.Y_WINE);
 
-  gfx.rect_fill(0, 0, usagi.GAME_W, usagi.GAME_H * 0.65, COLOR.Y_WINE);
+  // wall/backdrop
+  gfx.rect_fill(0, 0, usagi.GAME_W, usagi.GAME_H * 0.65, COLOR.X_PLUM);
 
   const { petX, petY } = State;
 
   const x = petX + noise1D(t / 2 + 39458) * 14; // TODO: scale speed/magnitude by anxiousness?
   const y = petY + (osc01(0.5) + noise1D(t + 1000)) * 5;
 
-  // body
+  const floor = petY + 110;
+
   const bodyX = x + 20;
   const bodyY = petY + 20 + (osc01(0.5, 0.34) + noise1D(t + 4325)) * 5;
   const BODY_SIZE = 65;
+
+  // shadow
+  ellipse(bodyX, floor, BODY_SIZE * 1.2, BODY_SIZE * 0.3, 60, COLOR.Z_INK, 1);
+  ellipse(x, floor, HEAD_SIZE * 1.2, HEAD_SIZE * 0.3, 60, COLOR.Z_INK, 1);
+
+  // body
   gfx.circ_fill(bodyX, bodyY, BODY_SIZE, COLOR.J_PERIWINKLE);
 
-  const floor = petY + 110;
-
-  // can't use x, need to stay fixed
+  // can't use x with noise applied, we want em to stay fixed
+  // conceptually `x + 20` matches what's in bodyX tho
   const footLeft = petX + 20 - 50;
   const footRight = petX + 20 + 60;
   // legs
