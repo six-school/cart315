@@ -59,8 +59,7 @@ _update = (dt: number) => {
 
 const HEAD_SIZE = 60;
 const EYE_SIZE = 12;
-const EYE_COL = COLOR.B_PEACH;
-const PUPIL_SIZE = 4;
+const PUPIL_SIZE = 7;
 const PUPIL_COL = COLOR.W_AUBERGINE;
 
 _draw = () => {
@@ -69,11 +68,6 @@ _draw = () => {
   const { petX, petY } = State;
 
   const y = petY + (osc01(0.5) + noise1D(t + 1000)) * 5;
-
-  const eyeLeftX = petX - (HEAD_SIZE - EYE_SIZE - 9);
-  const eyeLeftY = y;
-  const eyeRightX = petX + (HEAD_SIZE - EYE_SIZE - 9);
-  const eyeRightY = y + 5;
 
   // body
   const bodyX = petX + 20;
@@ -107,18 +101,25 @@ _draw = () => {
   gfx.circ_fill(petX, y, HEAD_SIZE, COLOR.J_PERIWINKLE);
 
   // ears
-  gfx.circ_fill(petX - 20, y - HEAD_SIZE, 20, COLOR.J_PERIWINKLE);
-  gfx.circ_fill(petX - 20, y - HEAD_SIZE, 10, PUPIL_COL);
-  gfx.circ_fill(petX + 46, y - HEAD_SIZE + 10, 20, COLOR.J_PERIWINKLE);
-  gfx.circ_fill(petX + 46, y - HEAD_SIZE + 10, 10, PUPIL_COL);
+  gfx.circ_fill(petX - 20, y - HEAD_SIZE, 30, COLOR.J_PERIWINKLE);
+  gfx.circ_fill(petX - 20, y - HEAD_SIZE - 5, 15, COLOR.N_STEEL);
+  gfx.circ_fill(petX + 46, y - HEAD_SIZE + 10, 30, COLOR.J_PERIWINKLE);
+  gfx.circ_fill(petX + 46, y - HEAD_SIZE + 5, 15, COLOR.N_STEEL);
+
+  const faceOffsetX = util.remap(noise1D(t + 12020), -1, 1, 0, -5);
+  const faceX = petX;
+  const faceY = y;
+
+  const eyeLeftX = faceX + faceOffsetX * 0.2 - (HEAD_SIZE - EYE_SIZE - 9);
+  const eyeLeftY = faceY;
+  const eyeRightX = faceX + faceOffsetX + (HEAD_SIZE - EYE_SIZE - 9);
+  const eyeRightY = faceY + 5;
 
   // eyes
   if (noise1D(t * 2) > 0.6) {
     gfx.line_ex(eyeLeftX - 12, eyeLeftY, eyeLeftX + 12, eyeLeftY, 4, PUPIL_COL);
     gfx.line_ex(eyeRightX - 12, eyeRightY, eyeRightX + 12, eyeRightY, 4, PUPIL_COL);
   } else {
-    gfx.circ_fill(eyeLeftX, eyeLeftY, EYE_SIZE, EYE_COL);
-    gfx.circ_fill(eyeRightX, eyeRightY, EYE_SIZE, EYE_COL);
     gfx.circ_fill(eyeLeftX - 4, eyeLeftY, PUPIL_SIZE, PUPIL_COL);
     gfx.circ_fill(eyeRightX + 4, eyeRightY, PUPIL_SIZE, PUPIL_COL);
   }
@@ -131,9 +132,12 @@ _draw = () => {
   // mouth
   const happiness = util.remap(noise1D(t / 3 + 2398), -1, 1, -0.2, -0.8);
 
-  gfx.circ_fill(petX - 10, y + 35 + osc(0.6) * 2, 4, COLOR.D_BLUSH);
-  curve(petX - 30, y + 24, petX - 10, y + 26, -0.9, 5, PUPIL_COL);
-  curve(petX - 10, y + 26, petX + 10, y + 28, -0.9, 5, PUPIL_COL);
+  const mouthX = faceX + faceOffsetX * 0.6;
+  gfx.circ_fill(mouthX - 10, faceY + 35 + osc(0.6) * 2, 4, COLOR.D_BLUSH);
+  curve(mouthX - 30, faceY + 24, mouthX - 10, faceY + 26, -0.9, 5, PUPIL_COL);
+  curve(mouthX - 10, faceY + 26, mouthX + 10, faceY + 28, -0.9, 5, PUPIL_COL);
+
+  gfx.circ_fill(mouthX - 12, faceY + 18, 10, COLOR.N_STEEL);
 
   // nose
   // gfx.tri_fill(petX - 5, y - 5, petX - 28, y + 27, petX + 5, y + 30, COLOR.F_SAGE);
