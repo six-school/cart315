@@ -1,5 +1,6 @@
 import { noise1D } from "./noise";
 import { COLOR } from "./palette";
+import { curve } from "./shapes";
 import { assertNever } from "./util";
 
 type GameState = {
@@ -58,8 +59,16 @@ _draw = () => {
   const eyeRightX = petX + (HEAD_SIZE - EYE_SIZE - 9);
   const eyeRightY = y + 5;
 
-  gfx.circ_fill(petX, y, HEAD_SIZE, COLOR.E_LAVENDER);
+  const bodyY = petY + (osc01(0.5, 0.34) + noise1D(t + 4325)) * 5;
+  gfx.circ_fill(petX + 20, bodyY + 70, 70, COLOR.K_GREY);
 
+  // head
+
+  gfx.circ_fill(petX, y, HEAD_SIZE, COLOR.J_PERIWINKLE);
+
+  // eyes
+  gfx.line_ex(eyeLeftX - 12, eyeLeftY - 20, eyeLeftX + 12, eyeLeftY - 18, 6, PUPIL_COL);
+  gfx.line_ex(eyeRightX - 12, eyeRightY - 20, eyeRightX + 12, eyeRightY - 19, 6, PUPIL_COL);
   if (noise1D(t * 2) > 0.6) {
     gfx.line_ex(eyeLeftX - 12, eyeLeftY, eyeLeftX + 12, eyeLeftY, 4, PUPIL_COL);
     gfx.line_ex(eyeRightX - 12, eyeRightY, eyeRightX + 12, eyeRightY, 4, PUPIL_COL);
@@ -69,4 +78,11 @@ _draw = () => {
     gfx.circ_fill(eyeLeftX - 4, eyeLeftY, PUPIL_SIZE, PUPIL_COL);
     gfx.circ_fill(eyeRightX + 4, eyeRightY, PUPIL_SIZE, PUPIL_COL);
   }
+
+  // mouth
+  const happiness = noise1D(t / 3 + 2398) * 0.4;
+  curve(petX - 25, y + 39, petX + 4, y + 41, happiness, 4, PUPIL_COL);
+
+  // nose
+  gfx.tri_fill(petX - 5, y - 5, petX - 28, y + 27, petX + 5, y + 30, COLOR.F_SAGE);
 };
