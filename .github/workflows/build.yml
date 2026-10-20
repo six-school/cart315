@@ -1,9 +1,9 @@
 name: Build and deploy to GitHub Pages
 
 on:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -11,43 +11,64 @@ permissions:
   pages: write
   id-token: write
 
-defaults:
-  run:
-    working-directory: ./prototype_1_pong # temp
-
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project:
+          - prototype_1_pong
+          - prototype_2_alt
+    defaults:
+      run:
+        working-directory: ./${{ matrix.project }}
 
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@ac5bf11548bf5e19b8aadb8182072616590fa4a6
         with:
-          package_json_file: "prototype_1_pong/package.json"
+          package_json_file: "${{ matrix.project }}/package.json"
       - uses: actions/setup-node@v7
         with:
-          node-version-file: "prototype_1_pong/.node-version"
-      - name: Download Usagi and build
+          node-version-file: "${{ matrix.project }}/.node-version"
+      - name: Download Usagi
         shell: bash
         run: |
-          set -e pipefail
+          set -eo pipefail
           USAGI_VERSION="$(cat .usagi-version)"
           url="https://github.com/brettchalupa/usagi/releases/download/v$USAGI_VERSION/usagi-$USAGI_VERSION-linux-x86_64.tar.gz"
           curl --fail --location --silent --show-error "$url" -o usagi.tar.gz
           mkdir -p bin
-          tar -xzf "usagi.tar.gz" -O ./usagi > bin/usagi
+          tar -xzf usagi.tar.gz -O ./usagi > bin/usagi
           chmod +x ./bin/usagi
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - name: Unzip build
-        run: |
-          cd export
-          unzip -q web.zip -d _site
+        run: unzip -q export/web.zip -d export/_site
+      - name: Upload build
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.project }}
+          path: ${{ matrix.project }}/export/_site
+          if-no-files-found: error
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Download all builds
+        uses: actions/download-artifact@v8
+        with:
+          path: _site
       - uses: actions/configure-pages@v5
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: ./prototype_1_pong/export/_site
+          path: _site
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
