@@ -6,13 +6,28 @@ type GameState = {
   petX: number;
   petY: number;
 
+  // all in the domain 0-1
   bodyTemp: number;
   stress: number;
   anxiety: number;
   fatigue: number;
-  bankBalance: number;
+  hunger: number;
+  mood: number;
 
-  apartmentTemp: number;
+  bankBalance: number;
+  employmentStatus: { t: "jobless" } | { t: "employed"; salary: number; firingRisk: number };
+  activity:
+    { t: "idle" } | { t: "jobsearch" } | { t: "working" } | { t: "eating" } | { t: "sleeping" };
+  activityTimeLeft: number;
+
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  monthlyRent: number;
+  groceryCost: number;
+  apartmentTemp: number; // 0-1
+  humidity: number; // 0-1
 };
 
 declare let State: GameState;
@@ -21,8 +36,23 @@ declare let t: number;
 // elapsed game time (slower than wall time if game slows down!)
 t = 0;
 
-/* oscillate between -1 and 1 freq times per sec*/
-const osc = (freq: number, phase = 0) => Math.sin((t + phase) * freq * Math.PI * 2);
+const MONTHS = [
+  "Pluviôse",
+  "Ventôse",
+  "Germinal",
+  "Floréal",
+  "Prairial",
+  "Messidor",
+  "Thermidor",
+  "Fructidor",
+  "Vendémiaire",
+  "Brumaire",
+  "Frimaire",
+  "Nivôse",
+] as const;
+
+/* oscillate between -1 and 1 `freq` times per sec, offset by `phase` % (0-1) */
+const osc = (freq: number, phase = 0) => Math.sin((t * freq + phase) * Math.PI * 2);
 /* oscillate between 0 to 1 freq times per sec*/
 const osc01 = (freq: number, phase = 0) => (osc(freq, phase) + 1) / 2;
 
@@ -46,9 +76,22 @@ _init = () => {
     stress: 0.2,
     anxiety: 0.4,
     fatigue: 0.3,
-    bankBalance: 1000,
+    hunger: 0.2,
+    mood: 0.5,
 
-    apartmentTemp: 0.5,
+    bankBalance: 32,
+    employmentStatus: { t: "jobless" },
+    activity: { t: "idle" },
+    activityTimeLeft: 15,
+
+    month: 10,
+    day: 20,
+    hour: 17,
+    minute: 45,
+    monthlyRent: 10,
+    groceryCost: 2,
+    apartmentTemp: 0.4,
+    humidity: 0.45,
   };
 };
 
@@ -72,6 +115,46 @@ _draw = () => {
   // wall/backdrop
   gfx.rect_fill(0, 0, usagi.GAME_W, usagi.GAME_H * 0.65, COLOR.X_PLUM);
 
+  // behind the pet!!
+  drawUI();
+  drawPet();
+};
+
+const UI_X = 320;
+const UI_Y = 10;
+const BAR_WIDTH = 300;
+const SPACING = 24;
+
+function drawUI() {
+  let row = 0;
+  const label = (text: string) => {
+    gfx.text_ex(text, UI_X, UI_Y + row * SPACING, 2, 0, COLOR.A_PALE_LIME, 1);
+    row++;
+  };
+  const bar = (amount: number) => {
+    const color = amount < 0.2 ? COLOR.D_BLUSH : amount <= 0.5 ? COLOR.C_BONE : COLOR.A_PALE_LIME;
+    gfx.rect_fill(UI_X, UI_Y + row * SPACING, BAR_WIDTH, 16, COLOR.N_STEEL, 1);
+    gfx.rect_fill(UI_X, UI_Y + row * SPACING, BAR_WIDTH * amount, 16, color, 1);
+    row++;
+  };
+  const stat = (text: string, amount: number) => {
+    label(text);
+    bar(amount);
+  };
+
+  const { day, month, hour, minute } = State;
+  label(`${day} ${MONTHS[month]}, ${hour}h${minute}`);
+
+  const { bodyTemp, stress, anxiety, fatigue, hunger, mood } = State;
+  stat(`Temperature`, bodyTemp);
+  stat(`Stress`, stress);
+  stat(`Anxiety`, anxiety);
+  stat(`Fatigue`, fatigue);
+  stat(`Hunger`, hunger);
+  stat(`Mood`, mood);
+}
+
+function drawPet() {
   const { petX, petY } = State;
 
   const x = petX + noise1D(t / 2 + 39458) * 14; // TODO: scale speed/magnitude by anxiousness?
@@ -166,9 +249,11 @@ _draw = () => {
   // highlight the cursor when noticed
   if (focalpoint === "cursor") {
     const lineCount = 12;
-    const innerDist = 15 + osc01(0.5) * 5;
-    const outerDist = 26 + osc01(0.5, 52) * 5;
     for (let i = 0; i < lineCount; i++) {
+      const oscScale = i % 2 === 0 ? 2 : 3;
+      const innerDist = 21 + osc(0.5) * oscScale;
+      const outerDist = 32 + osc(0.5) * oscScale;
+
       const a = (i / lineCount) * Math.PI * 2 + t / 2;
       const dx = Math.cos(a);
       const dy = Math.sin(a);
@@ -183,4 +268,4 @@ _draw = () => {
       );
     }
   }
-};
+}
