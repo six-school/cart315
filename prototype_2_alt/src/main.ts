@@ -71,34 +71,39 @@ _draw = () => {
 
   const { petX, petY } = State;
 
+  const x = petX + noise1D(t / 2 + 39458) * 14; // TODO: scale speed/magnitude by anxiousness?
   const y = petY + (osc01(0.5) + noise1D(t + 1000)) * 5;
 
   // body
-  const bodyX = petX + 20;
+  const bodyX = x + 20;
   const bodyY = petY + 20 + (osc01(0.5, 0.34) + noise1D(t + 4325)) * 5;
   const BODY_SIZE = 65;
   gfx.circ_fill(bodyX, bodyY, BODY_SIZE, COLOR.J_PERIWINKLE);
 
   const floor = petY + 110;
+
+  // can't use x, need to stay fixed
+  const footLeft = petX + 20 - 50;
+  const footRight = petX + 20 + 60;
   // legs
-  curve(bodyX - 30, bodyY + BODY_SIZE - 10, bodyX - 50, floor, -0.3, 9, COLOR.J_PERIWINKLE);
-  curve(bodyX + 30, bodyY + BODY_SIZE - 10, bodyX + 60, floor, 0.3, 9, COLOR.J_PERIWINKLE);
-  ellipse(bodyX - 55, floor, 10, 5, 10, COLOR.J_PERIWINKLE);
-  ellipse(bodyX + 65, floor, 10, 5, 10, COLOR.J_PERIWINKLE);
+  curve(bodyX - 30, bodyY + BODY_SIZE - 10, footLeft, floor, -0.3, 9, COLOR.J_PERIWINKLE);
+  curve(bodyX + 30, bodyY + BODY_SIZE - 10, footRight, floor, 0.3, 9, COLOR.J_PERIWINKLE);
+  ellipse(footLeft - 5, floor, 10, 5, 10, COLOR.J_PERIWINKLE);
+  ellipse(footRight + 5, floor, 10, 5, 10, COLOR.J_PERIWINKLE);
 
   // head
-  gfx.circ_fill(petX, y, HEAD_SIZE, COLOR.J_PERIWINKLE);
+  gfx.circ_fill(x, y, HEAD_SIZE, COLOR.J_PERIWINKLE);
 
   // some fake parallax
   const faceOffsetX = util.remap(noise1D(t + 12020), -1, 1, 0, -10);
-  const faceX = petX;
+  const faceX = x;
   const faceY = y;
 
   // ears
-  gfx.circ_fill(petX + 46 + faceOffsetX * 0.5, y - HEAD_SIZE + 10, 30, COLOR.J_PERIWINKLE);
-  gfx.circ_fill(petX + 46 + faceOffsetX * 0.5, y - HEAD_SIZE + 5, 15, COLOR.N_STEEL);
-  gfx.circ_fill(petX - 20 - faceOffsetX, y - HEAD_SIZE + 5, 30, COLOR.J_PERIWINKLE);
-  gfx.circ_fill(petX - 20 - faceOffsetX, y - HEAD_SIZE, 15, COLOR.N_STEEL);
+  gfx.circ_fill(x + 46 + faceOffsetX * 0.5, y - HEAD_SIZE + 10, 30, COLOR.J_PERIWINKLE);
+  gfx.circ_fill(x + 46 + faceOffsetX * 0.5, y - HEAD_SIZE + 5, 15, COLOR.N_STEEL);
+  gfx.circ_fill(x - 20 - faceOffsetX, y - HEAD_SIZE + 5, 30, COLOR.J_PERIWINKLE);
+  gfx.circ_fill(x - 20 - faceOffsetX, y - HEAD_SIZE, 15, COLOR.N_STEEL);
 
   const eyeLeftX = faceX + faceOffsetX * 0.2 - (HEAD_SIZE - EYE_SIZE - 9);
   const eyeLeftY = faceY;
@@ -128,7 +133,4 @@ _draw = () => {
   curve(mouthX - 10, faceY + 26, mouthX + 10, faceY + 28, -0.9, 5, PUPIL_COL);
 
   gfx.circ_fill(mouthX - 12, faceY + 18, 10, COLOR.N_STEEL);
-
-  // nose
-  // gfx.tri_fill(petX - 5, y - 5, petX - 28, y + 27, petX + 5, y + 30, COLOR.F_SAGE);
 };
