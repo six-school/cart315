@@ -1,4 +1,3 @@
-// borrowed from proto_1
 export function ellipse(
   cx: number,
   cy: number,
@@ -14,10 +13,18 @@ export function ellipse(
   const iy = ry - thickness + 0.5;
   const hollow = ix > 0 && iy > 0;
   for (let dy = -ry; dy <= ry; dy++) {
-    for (let dx = -rx; dx <= rx; dx++) {
-      if ((dx * dx) / (ox * ox) + (dy * dy) / (oy * oy) > 1) continue;
-      if (hollow && (dx * dx) / (ix * ix) + (dy * dy) / (iy * iy) < 1) continue;
-      gfx.px(cx + dx, cy + dy, color, alpha);
+    const outer = Math.min(rx, Math.floor(ox * Math.sqrt(Math.max(0, 1 - (dy * dy) / (oy * oy)))));
+    let inner = 0;
+    if (hollow && dy * dy < iy * iy) {
+      inner = Math.ceil(ix * Math.sqrt(1 - (dy * dy) / (iy * iy)));
+    }
+    if (inner > outer) continue;
+    if (inner === 0) {
+      gfx.rect_fill(cx - outer, cy + dy, 2 * outer + 1, 1, color, alpha);
+    } else {
+      const w = outer - inner + 1;
+      gfx.rect_fill(cx - outer, cy + dy, w, 1, color, alpha);
+      gfx.rect_fill(cx + inner, cy + dy, w, 1, color, alpha);
     }
   }
 }
@@ -67,6 +74,24 @@ export function arc(
   }
 }
 
+// max distance in px outer edge may stray from the true arc, lower = smoother
+const CURVE_TOLERANCE = 0.5;
+const CURVE_MAX_SEGMENTS = 48;
+
+function cap(x: number, y: number, half: number, color: number) {
+  const cx = Math.round(x);
+  const cy = Math.round(y);
+  const half2 = half * half;
+  let prev = -1;
+  for (let dy = Math.floor(half); dy >= 0; dy--) {
+    const w = Math.floor(Math.sqrt(half2 - dy * dy));
+    if (w > prev) {
+      gfx.rect_fill(cx - w, cy - dy, 2 * w + 1, 2 * dy + 1, color);
+      prev = w;
+    }
+  }
+}
+
 // like usagi's line_ex, but with bend
 export function curve(
   x0: number,
@@ -76,89 +101,93 @@ export function curve(
   bend: number,
   thickness: number,
   color: number,
-  alpha?: number,
 ) {
   const half = thickness / 2;
   const vx = x1 - x0;
   const vy = y1 - y0;
   const len = Math.sqrt(vx * vx + vy * vy);
-  const straight = len === 0 || Math.abs(bend) < 1e-6;
 
-  // Circle through both endpoints (only used when bent)
-  let ccx = 0;
-  let ccy = 0;
-  let r = 0;
-  let ax = 0;
-  let ay = 0;
-  let bx = 0;
-  let by = 0; // endpoint directions from the center
-  let o = 1; // sweep orientation (+1 or -1)
-  let wide = false; // more than a semicircle?
+  cap(x0, y0, half, color);
+  if (len === 0) return;
+  cap(x1, y1, half, color);
 
-  let minX = Math.min(x0, x1);
-  let maxX = Math.max(x0, x1);
-  let minY = Math.min(y0, y1);
-  let maxY = Math.max(y0, y1);
+  const thin = thickness < 2;
 
-  if (!straight) {
-    const c = len / 2;
-    const s = bend * c;
-    const nx = vy / len;
-    const ny = -vx / len;
-    const k = (s * s - c * c) / (2 * s);
-    ccx = (x0 + x1) / 2 + nx * k;
-    ccy = (y0 + y1) / 2 + ny * k;
-    r = (c * c + s * s) / (2 * Math.abs(s));
-    ax = x0 - ccx;
-    ay = y0 - ccy;
-    bx = x1 - ccx;
-    by = y1 - ccy;
-    const apx = (x0 + x1) / 2 + nx * s - ccx;
-    const apy = (y0 + y1) / 2 + ny * s - ccy;
-    o = ax * apy - ay * apx >= 0 ? 1 : -1;
-    wide = Math.abs(bend) > 1;
-
-    if (inWedge(r, 0)) maxX = Math.max(maxX, ccx + r);
-    if (inWedge(-r, 0)) minX = Math.min(minX, ccx - r);
-    if (inWedge(0, r)) maxY = Math.max(maxY, ccy + r);
-    if (inWedge(0, -r)) minY = Math.min(minY, ccy - r);
-  }
-
-  function inWedge(px: number, py: number): boolean {
-    const afterStart = o * (ax * py - ay * px) >= 0;
-    const beforeEnd = o * (px * by - py * bx) >= 0;
-    return wide ? afterStart || beforeEnd : afterStart && beforeEnd;
-  }
-
-  const xa = Math.floor(minX - half);
-  const xb = Math.ceil(maxX + half);
-  const ya = Math.floor(minY - half);
-  const yb = Math.ceil(maxY + half);
-  const half2 = half * half;
-
-  for (let y = ya; y <= yb; y++) {
-    for (let x = xa; x <= xb; x++) {
-      let hit: boolean;
-      if (straight) {
-        let t = len === 0 ? 0 : ((x - x0) * vx + (y - y0) * vy) / (len * len);
-        t = Math.max(0, Math.min(1, t));
-        const ex = x - (x0 + vx * t);
-        const ey = y - (y0 + vy * t);
-        hit = ex * ex + ey * ey <= half2;
-      } else {
-        const px = x - ccx;
-        const py = y - ccy;
-        if (inWedge(px, py)) {
-          hit = Math.abs(Math.sqrt(px * px + py * py) - r) <= half;
-        } else {
-          const d0x = x - x0;
-          const d0y = y - y0;
-          const d1x = x - x1;
-          const d1y = y - y1;
-          hit = d0x * d0x + d0y * d0y <= half2 || d1x * d1x + d1y * d1y <= half2;
-        }
-      }
-      if (hit) gfx.px(x, y, color, alpha);
+  if (Math.abs(bend) < 1e-6) {
+    if (thin) {
+      gfx.line(x0, y0, x1, y1, color);
+      return;
     }
+    const ox = (-vy / len) * half;
+    const oy = (vx / len) * half;
+    // offset by half a pixel to line up
+    const ax = x0 + 0.5;
+    const ay = y0 + 0.5;
+    const bx = x1 + 0.5;
+    const by = y1 + 0.5;
+    gfx.tri_fill(ax + ox, ay + oy, ax - ox, ay - oy, bx + ox, by + oy, color);
+    gfx.tri_fill(ax - ox, ay - oy, bx - ox, by - oy, bx + ox, by + oy, color);
+    return;
+  }
+
+  const c = len / 2;
+  const s = bend * c;
+  const nx = vy / len;
+  const ny = -vx / len;
+  const k = (s * s - c * c) / (2 * s);
+  const ccx = (x0 + x1) / 2 + nx * k;
+  const ccy = (y0 + y1) / 2 + ny * k;
+  const r = (c * c + s * s) / (2 * Math.abs(s));
+
+  const sweep = 4 * Math.atan(Math.abs(bend));
+
+  const ax = x0 - ccx;
+  const ay = y0 - ccy;
+  const apx = (x0 + x1) / 2 + nx * s - ccx;
+  const apy = (y0 + y1) / 2 + ny * s - ccy;
+  const dir = ax * apy - ay * apx >= 0 ? 1 : -1;
+
+  const ro = thin ? r : r + half;
+  const ri = thin ? r : Math.max(0, r - half);
+  let segments = CURVE_MAX_SEGMENTS;
+  if (ro > CURVE_TOLERANCE) {
+    const maxStep = 2 * Math.acos(1 - CURVE_TOLERANCE / ro);
+    segments = Math.max(1, Math.min(CURVE_MAX_SEGMENTS, Math.ceil(sweep / maxStep)));
+  }
+
+  const step = (dir * sweep) / segments;
+  const cs = Math.cos(step);
+  const sn = Math.sin(step);
+  const cx = thin ? ccx : ccx + 0.5;
+  const cy = thin ? ccy : ccy + 0.5;
+  let ux = ax / r;
+  let uy = ay / r;
+  let pox = cx + ux * ro;
+  let poy = cy + uy * ro;
+  let pix = cx + ux * ri;
+  let piy = cy + uy * ri;
+  for (let i = 1; i <= segments; i++) {
+    if (i === segments) {
+      ux = (x1 - ccx) / r;
+      uy = (y1 - ccy) / r;
+    } else {
+      const t = ux * cs - uy * sn;
+      uy = ux * sn + uy * cs;
+      ux = t;
+    }
+    const qox = cx + ux * ro;
+    const qoy = cy + uy * ro;
+    const qix = cx + ux * ri;
+    const qiy = cy + uy * ri;
+    if (thin) {
+      gfx.line(pox, poy, qox, qoy, color);
+    } else {
+      gfx.tri_fill(pox, poy, pix, piy, qox, qoy, color);
+      gfx.tri_fill(pix, piy, qix, qiy, qox, qoy, color);
+    }
+    pox = qox;
+    poy = qoy;
+    pix = qix;
+    piy = qiy;
   }
 }
