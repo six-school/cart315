@@ -74,6 +74,7 @@ const DEBUG_ACTS = [
 const osc = (freq: number, phase = 0) => Math.sin((t * freq + phase) * Math.PI * 2);
 /* oscillate between 0 to 1 freq times per sec*/
 const osc01 = (freq: number, phase = 0) => (osc(freq, phase) + 1) / 2;
+const clamp01 = (val: number) => util.clamp(val, 0, 1);
 
 _config = () => {
   return {
@@ -132,8 +133,8 @@ _update = (dt: number) => {
   State.mouse = input.mouse();
   const [mx] = State.mouse;
 
-  const mouseNoticeThresholdX = State.petX + 100;
-  const target = input.mouse_over() && mx < mouseNoticeThresholdX ? "cursor" : "none";
+  const cursorNoticeThresholdX = State.petX + 100;
+  const target = input.mouse_over() && mx < cursorNoticeThresholdX ? "cursor" : "none";
   const step = dt / ATTENTION_TRANSITION_DURATION;
   for (const [k, v] of Object.entries(State.attention.weight)) {
     const next = util.clamp(v + (k === target ? step : -step), 0, 1);
@@ -176,6 +177,36 @@ function updateGame(dt: number) {
         }
       }
     }
+  }
+
+  const FATIGUE_FACTOR = 0.01;
+  const REST_FACTOR = 0.018;
+
+  const HUNGER_FACTOR = 0.01;
+  const EAT_FACTOR = 0.03;
+
+  const act = State.activity.t;
+  if (act === "sleeping") {
+    State.fatigue = clamp01(State.fatigue - dt * REST_FACTOR);
+  } else {
+    const actFactor = act === "working" ? 2 : act === "jobsearch" ? 1.5 : 1;
+    const timeFactor = State.hour < 6 ? 2 : 1;
+    const mult = actFactor * timeFactor;
+    State.fatigue = clamp01(State.fatigue + dt * FATIGUE_FACTOR * mult);
+  }
+
+  if (act === "eating") {
+    State.hunger = clamp01(State.hunger - dt * EAT_FACTOR);
+  } else {
+    const factor = act === "working" ? 1.7 : act === "jobsearch" ? 1.2 : 1;
+    State.hunger = clamp01(State.hunger + dt * HUNGER_FACTOR * factor);
+  }
+
+  if (State.fatigue > 0.75 && act !== "sleeping") {
+    State.mood = clamp01(State.mood - dt * 0.01);
+  }
+  if (State.hunger > 0.75 && act !== "eating") {
+    State.mood = clamp01(State.mood - dt * 0.01);
   }
 
   State.activityTimeLeft -= elapsed;
@@ -314,12 +345,12 @@ function drawPet() {
   ellipse(footRight + 5, floor, 10, 5, 10, COLOR.J_PERIWINKLE);
 
   // TODO: duplicated in _update(), should be generalized as bounds for noticing anything
-  const mouseNoticeThresholdX = petX + 100;
+  const cursorNoticeThresholdX = petX + 100;
 
   // way more complicated than it needs to be on the expectation that we'll have
   // multiple possible targets at some point (when we'll also need to do a
   // weighted sum to get the final position)
-  const attentionX = util.clamp(mx, 0, mouseNoticeThresholdX);
+  const attentionX = util.clamp(mx, 0, cursorNoticeThresholdX);
   const attentionY = my;
 
   let faceOffsetX = 0;
@@ -328,7 +359,7 @@ function drawPet() {
   if (activity.t !== "sleeping") {
     faceOffsetX = util.lerp(
       util.remap(noise1D(t + 12020), -1, 1, 0, -10),
-      util.remap(attentionX, 0, mouseNoticeThresholdX, -20, 10),
+      util.remap(attentionX, 0, cursorNoticeThresholdX, -20, 10),
       attention.weight.cursor,
     );
     faceOffsetY = util.lerp(
@@ -475,7 +506,8 @@ function drawPet() {
   }
 
   // highlight the cursor when noticed
-  if (attention.weight.cursor > 0) {
+  if (activity.t !== "sleeping" && attention.weight.cursor > 0) {
+    // TODO: for now cursor is the only thing that can have attention
     const [x, y] = [mx, my];
     const lineCount = 12;
     for (let i = 0; i < lineCount; i++) {
