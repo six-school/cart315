@@ -65,9 +65,9 @@ const MONTHS = [
 const DEBUG_ACTS = [
   ["idle", input.KEY_1],
   ["jobsearch", input.KEY_2],
-  ["working", input.KEY_2],
-  ["eating", input.KEY_3],
-  ["sleeping", input.KEY_4],
+  ["working", input.KEY_3],
+  ["eating", input.KEY_4],
+  ["sleeping", input.KEY_5],
 ] as const;
 
 /* oscillate between -1 and 1 `freq` times per sec, offset by `phase` % (0-1) */
@@ -285,6 +285,8 @@ function drawPet() {
     activityTimeLeft,
   } = State;
 
+  if (activity.t === "working") return;
+
   const adjX = petX + noise1D(t / 2 + 39458) * 14; // TODO: scale speed/magnitude by anxiousness?
   const adjY = petY + (osc01(0.5) + noise1D(t + 1000)) * 5;
 
@@ -320,17 +322,21 @@ function drawPet() {
   const attentionX = util.clamp(mx, 0, mouseNoticeThresholdX);
   const attentionY = my;
 
-  // some fake parallax
-  const faceOffsetX = util.lerp(
-    util.remap(noise1D(t + 12020), -1, 1, 0, -10),
-    util.remap(attentionX, 0, mouseNoticeThresholdX, -20, 10),
-    attention.weight.cursor,
-  );
-  const faceOffsetY = util.lerp(
-    0,
-    util.remap(attentionY, 0, usagi.GAME_H, -20, 20),
-    attention.weight.cursor,
-  );
+  let faceOffsetX = 0;
+  let faceOffsetY = 0;
+
+  if (activity.t !== "sleeping") {
+    faceOffsetX = util.lerp(
+      util.remap(noise1D(t + 12020), -1, 1, 0, -10),
+      util.remap(attentionX, 0, mouseNoticeThresholdX, -20, 10),
+      attention.weight.cursor,
+    );
+    faceOffsetY = util.lerp(
+      0,
+      util.remap(attentionY, 0, usagi.GAME_H, -20, 20),
+      attention.weight.cursor,
+    );
+  }
 
   const faceX = adjX;
   const faceY = adjY - 20;
@@ -353,12 +359,34 @@ function drawPet() {
   const eyeRightY = faceY + faceOffsetY + 5;
 
   // eyes
-  if (noise1D(t * 2) > 0.6) {
-    gfx.line_ex(eyeLeftX - 12, eyeLeftY, eyeLeftX + 12, eyeLeftY, 4, PUPIL_COL);
-    gfx.line_ex(eyeRightX - 12, eyeRightY, eyeRightX + 12, eyeRightY, 4, PUPIL_COL);
+  if (activity.t === "sleeping") {
+    curve(eyeLeftX - 12, eyeLeftY, eyeLeftX + 12, eyeLeftY, -0.5, 8, PUPIL_COL);
+    curve(eyeRightX - 12, eyeRightY, eyeRightX + 12, eyeRightY, -0.5, 8, PUPIL_COL);
+  } else if (mood < 0.2) {
+    if (mood < 0.1) {
+      // cry
+      const cycle = (t / 1) % 1;
+      const falling = cycle > 0.5;
+      const tearOffset = 5 + (falling ? util.remap(cycle, 0.5, 1, 0, 1) ** 2 * 70 : 0);
+      const tearSize = util.clamp(cycle * 10, 0, 5);
+      gfx.circ_fill(eyeLeftX - 12, eyeLeftY + tearOffset, tearSize, COLOR.E_LAVENDER);
+      gfx.circ_fill(eyeRightX + 12, eyeRightY + tearOffset, tearSize, COLOR.E_LAVENDER);
+    }
+    curve(eyeLeftX - 12, eyeLeftY, eyeLeftX + 12, eyeLeftY, -0.2, 8, PUPIL_COL);
+    curve(eyeRightX - 12, eyeRightY, eyeRightX + 12, eyeRightY, -0.2, 8, PUPIL_COL);
+  } else if (mood > 0.8) {
+    curve(eyeLeftX - 12, eyeLeftY, eyeLeftX + 12, eyeLeftY, 0.5, 8, PUPIL_COL);
+    curve(eyeRightX - 12, eyeRightY, eyeRightX + 12, eyeRightY, 0.5, 8, PUPIL_COL);
   } else {
-    gfx.circ_fill(eyeLeftX - 4, eyeLeftY, PUPIL_SIZE, PUPIL_COL);
-    gfx.circ_fill(eyeRightX + 4, eyeRightY, PUPIL_SIZE, PUPIL_COL);
+    // eslint-disable-next-line no-lonely-if
+    if (noise1D(t * 2) > 0.6) {
+      // blink
+      gfx.line_ex(eyeLeftX - 12, eyeLeftY, eyeLeftX + 12, eyeLeftY, 4, PUPIL_COL);
+      gfx.line_ex(eyeRightX - 12, eyeRightY, eyeRightX + 12, eyeRightY, 4, PUPIL_COL);
+    } else {
+      gfx.circ_fill(eyeLeftX - 4, eyeLeftY, PUPIL_SIZE, PUPIL_COL);
+      gfx.circ_fill(eyeRightX + 4, eyeRightY, PUPIL_SIZE, PUPIL_COL);
+    }
   }
 
   // brows
@@ -382,8 +410,46 @@ function drawPet() {
 
   // draw activity
   switch (activity.t) {
-    case "jobsearch":
+    case "jobsearch": {
+      const tableTop = petY + 50;
+      const tableL = petX - 140;
+      const tableW = 120;
+      const tableH = 60;
+      // prettier-ignore
+      ellipse(tableL + (tableW + 60) / 2, tableTop + 20 + tableH, (tableW + 60) / 2 + 3, 20, 60, COLOR.Z_INK, 0.6);
+      gfx.rect_fill(tableL + tableW / 2 - 30, tableTop + 10, 20, 60, COLOR.W_AUBERGINE);
+      gfx.rect_fill(tableL, tableTop, tableW, 20, COLOR.H_TAUPE);
+      gfx.rect_fill(tableL, tableTop + 20, 20, 60, COLOR.H_TAUPE);
+      gfx.rect_fill(tableL + 100, tableTop + 20, 20, 60, COLOR.H_TAUPE);
+      gfx.rect_fill(tableL + tableW, tableTop, 60, 20, COLOR.S_UMBER);
+      gfx.rect_fill(tableL + tableW, tableTop + 20, 20, 60, COLOR.S_UMBER);
+      gfx.rect_fill(tableL + tableW + 40, tableTop + 20, 20, 60, COLOR.S_UMBER);
+
+      const laptopY = tableTop - 60;
+      const laptopW = 100;
+      const laptopSkew = 20;
+      const laptopCol = COLOR.F_SAGE;
+
+      const lX1 = tableL;
+      const lX2 = tableL + laptopW;
+      const lX3 = tableL + laptopSkew;
+      const lX4 = tableL + laptopW + laptopSkew;
+
+      gfx.rect_fill(lX4 - 5, tableTop - 5, 60, 5, laptopCol);
+      gfx.tri_fill(lX1, laptopY, lX2, laptopY, lX3, tableTop, laptopCol);
+      gfx.tri_fill(lX2, laptopY, lX3, tableTop, lX4, tableTop, laptopCol);
+
+      const logoSize = 10;
+      const logoX1 = lX1 + laptopSkew / 2 + laptopW / 2 - logoSize;
+      const logoX2 = logoX1 + logoSize;
+      const logoX3 = logoX1 + 3;
+      const logoX4 = logoX1 + logoSize + 3;
+      const logoY = laptopY + 30;
+      gfx.tri_fill(logoX1, logoY, logoX2, logoY, logoX3, logoY + logoSize, COLOR.A_PALE_LIME);
+      // prettier-ignore
+      gfx.tri_fill(logoX2, logoY, logoX3, logoY + logoSize, logoX4, logoY + logoSize, COLOR.A_PALE_LIME);
       break;
+    }
     case "eating": {
       const bottleX = petX - 100;
       const bottleY = floor + 5;
