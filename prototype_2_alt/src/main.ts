@@ -77,7 +77,7 @@ _init = () => {
     anxiety: 0.4,
     fatigue: 0.3,
     hunger: 0.2,
-    mood: 0.5,
+    mood: 0.75,
 
     bankBalance: 32,
     employmentStatus: { t: "jobless" },
@@ -124,6 +124,7 @@ const UI_X = 320;
 const UI_Y = 10;
 const BAR_WIDTH = 300;
 const SPACING = 24;
+const UI_SCALE = [COLOR.D_BLUSH, COLOR.G_DUSTY_ROSE, COLOR.C_BONE, COLOR.F_SAGE, COLOR.A_PALE_LIME];
 
 function drawUI() {
   let row = 0;
@@ -131,27 +132,36 @@ function drawUI() {
     gfx.text_ex(text, UI_X, UI_Y + row * SPACING, 2, 0, COLOR.A_PALE_LIME, 1);
     row++;
   };
-  const bar = (amount: number) => {
-    const color = amount < 0.2 ? COLOR.D_BLUSH : amount <= 0.5 ? COLOR.C_BONE : COLOR.A_PALE_LIME;
+  const bar = (amount: number, color: number) => {
     gfx.rect_fill(UI_X, UI_Y + row * SPACING, BAR_WIDTH, 16, COLOR.N_STEEL, 1);
     gfx.rect_fill(UI_X, UI_Y + row * SPACING, BAR_WIDTH * amount, 16, color, 1);
     row++;
   };
-  const stat = (text: string, amount: number) => {
+  const stat = (text: string, amount: number, preference: "low" | "neutral" | "high") => {
+    const mapped = (() => {
+      // prettier-ignore
+      // eslint-disable-next-line default-case
+      switch (preference) {
+        case "low": return 1 - amount;
+        case "neutral": return 1 - Math.abs(amount - 0.5) * 2;
+        case "high": return amount;
+      }
+    })();
+    const color = UI_SCALE[Math.floor(util.clamp(mapped, 0, 0.99) * UI_SCALE.length)];
     label(text);
-    bar(amount);
+    bar(amount, color);
   };
 
   const { day, month, hour, minute } = State;
   label(`${day} ${MONTHS[month]}, ${hour}h${minute}`);
 
   const { bodyTemp, stress, anxiety, fatigue, hunger, mood } = State;
-  stat(`Temperature`, bodyTemp);
-  stat(`Stress`, stress);
-  stat(`Anxiety`, anxiety);
-  stat(`Fatigue`, fatigue);
-  stat(`Hunger`, hunger);
-  stat(`Mood`, mood);
+  stat(`Temperature`, bodyTemp, "neutral");
+  stat(`Stress`, stress, "low");
+  stat(`Anxiety`, anxiety, "low");
+  stat(`Fatigue`, fatigue, "low");
+  stat(`Hunger`, hunger, "low");
+  stat(`Mood`, mood, "high");
 }
 
 function drawPet() {
