@@ -416,13 +416,15 @@ function drawPet() {
       const tableW = 120;
       const tableH = 60;
       // prettier-ignore
-      ellipse(tableL + (tableW + 60) / 2, tableTop + 20 + tableH, (tableW + 60) / 2 + 3, 20, 60, COLOR.Z_INK, 0.6);
-      gfx.rect_fill(tableL + tableW / 2 - 30, tableTop + 10, 20, 60, COLOR.W_AUBERGINE);
+      ellipse(tableL + (tableW + 60) / 2, tableTop + 20 + tableH, (tableW + 60) / 2 + 5, 20, 60, COLOR.Z_INK, 0.6);
+      gfx.rect_fill(tableL + tableW / 2 - 25, tableTop + 10, 20, 60, COLOR.W_AUBERGINE);
       gfx.rect_fill(tableL, tableTop, tableW, 20, COLOR.H_TAUPE);
       gfx.rect_fill(tableL, tableTop + 20, 20, 60, COLOR.H_TAUPE);
+      gfx.rect_fill(tableL + 20, tableTop + 20, 20, 60, COLOR.W_AUBERGINE);
       gfx.rect_fill(tableL + 100, tableTop + 20, 20, 60, COLOR.H_TAUPE);
       gfx.rect_fill(tableL + tableW, tableTop, 60, 20, COLOR.S_UMBER);
       gfx.rect_fill(tableL + tableW, tableTop + 20, 20, 60, COLOR.S_UMBER);
+      gfx.rect_fill(tableL + tableW + 25, tableTop + 20, 15, 60, COLOR.W_AUBERGINE);
       gfx.rect_fill(tableL + tableW + 40, tableTop + 20, 20, 60, COLOR.S_UMBER);
 
       const laptopY = tableTop - 60;
@@ -464,8 +466,8 @@ function drawPet() {
       const strawX2 = strawX1 + 20 + (adjX - petX);
       const strawY1 = bottleY - bottleH - 20;
       const strawCol = stuffLeft > 0 ? stuffCol : COLOR.M_SLATE;
-      gfx.line_ex(strawX1, bottleY - 1, strawX2, strawY1, 4, strawCol, 0.7);
-      gfx.line_ex(strawX2, strawY1, tongueX, tongueY, 4, strawCol, 0.7);
+      gfx.line_ex(strawX1, bottleY - 1, strawX2, strawY1, 5, strawCol, 0.7);
+      gfx.line_ex(strawX2, strawY1, tongueX, tongueY, 5, strawCol, 0.7);
       break;
     }
     default:
