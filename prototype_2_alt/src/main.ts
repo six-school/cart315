@@ -28,6 +28,9 @@ type GameState = {
   groceryCost: number;
   apartmentTemp: number; // 0-1
   humidity: number; // 0-1
+
+  mouse: [number, number];
+  attention: { weight: { none: number; cursor: number } };
 };
 
 declare let State: GameState;
@@ -35,6 +38,9 @@ declare let State: GameState;
 declare let t: number;
 // elapsed game time (slower than wall time if game slows down!)
 t = 0;
+
+type AttentionTarget = "cursor" | "none";
+const ATTENTION_TRANSITION_DURATION = 0.16;
 
 const MONTHS = [
   "Pluviôse",
@@ -92,6 +98,9 @@ _init = () => {
     groceryCost: 2,
     apartmentTemp: 0.4,
     humidity: 0.45,
+
+    mouse: [0, 0],
+    attention: { weight: { none: 1, cursor: 0 } },
   };
 };
 
@@ -101,7 +110,24 @@ _update = (dt: number) => {
   if (dt > 0.0333) dt = 0.0333;
   t += dt;
 
-  // TODO: game logic
+  State.mouse = input.mouse();
+  const [mx] = State.mouse;
+
+  const mouseNoticeThresholdX = State.petX + 100;
+  const target = input.mouse_over() && mx < mouseNoticeThresholdX ? "cursor" : "none";
+  const step = dt / ATTENTION_TRANSITION_DURATION;
+  for (const [k, v] of Object.entries(State.attention.weight)) {
+    const next = util.clamp(v + (k === target ? step : -step), 0, 1);
+    State.attention.weight[k as AttentionTarget] = next;
+  }
+
+  // if (State.mouse[0] > UI_X && input.mouse_held(input.MOUSE_LEFT)) {
+  //   State.mood = util.clamp(util.remap(State.mouse[0], UI_X, usagi.GAME_W, 0, 1), 0, 1);
+  // }
+
+  // State.activityTimeLeft -= 1;
+  // if (State.activityTimeLeft <= 0) {
+  // }
 };
 
 const HEAD_SIZE = 60;
@@ -115,29 +141,23 @@ _draw = () => {
   // wall/backdrop
   gfx.rect_fill(0, 0, usagi.GAME_W, usagi.GAME_H * 0.65, COLOR.X_PLUM);
 
-  // behind the pet!!
-  drawUI();
+  drawUI(); // behind the pet
   drawPet();
 };
 
 const UI_X = 320;
 const UI_Y = 10;
-const BAR_WIDTH = 300;
+const BAR_WIDTH = 140;
 const SPACING = 24;
 const UI_SCALE = [COLOR.D_BLUSH, COLOR.G_DUSTY_ROSE, COLOR.C_BONE, COLOR.F_SAGE, COLOR.A_PALE_LIME];
 
 function drawUI() {
-  let row = 0;
-  const label = (text: string) => {
-    gfx.text_ex(text, UI_X, UI_Y + row * SPACING, 2, 0, COLOR.A_PALE_LIME, 1);
-    row++;
-  };
-  const bar = (amount: number, color: number) => {
-    gfx.rect_fill(UI_X, UI_Y + row * SPACING, BAR_WIDTH, 16, COLOR.N_STEEL, 1);
-    gfx.rect_fill(UI_X, UI_Y + row * SPACING, BAR_WIDTH * amount, 16, color, 1);
-    row++;
-  };
-  const stat = (text: string, amount: number, preference: "low" | "neutral" | "high") => {
+  const { day, month, hour, minute } = State;
+  gfx.text_ex(`${day} ${MONTHS[month]}, ${hour}h${minute}`, UI_X, UI_Y, 2, 0, COLOR.A_PALE_LIME, 1);
+
+  type StatArgs = [text: string, amount: number, preference: "low" | "neutral" | "high"];
+
+  const drawStat = ([text, amount, preference]: StatArgs, row: number, col: number) => {
     const mapped = (() => {
       // prettier-ignore
       // eslint-disable-next-line default-case
@@ -147,38 +167,59 @@ function drawUI() {
         case "high": return amount;
       }
     })();
-    const color = UI_SCALE[Math.floor(util.clamp(mapped, 0, 0.99) * UI_SCALE.length)];
-    label(text);
-    bar(amount, color);
+    const barColor = UI_SCALE[Math.floor(util.clamp(mapped, 0, 0.99) * UI_SCALE.length)];
+
+    const x = UI_X + col * (BAR_WIDTH + SPACING);
+    gfx.text_ex(text, x, UI_Y + row * SPACING, 2, 0, COLOR.A_PALE_LIME, 1);
+    gfx.rect_fill(x, UI_Y + (row + 1) * SPACING, BAR_WIDTH, 16, COLOR.N_STEEL, 1);
+    gfx.rect_fill(x, UI_Y + (row + 1) * SPACING, BAR_WIDTH * amount, 16, barColor, 1);
   };
 
-  const { day, month, hour, minute } = State;
-  label(`${day} ${MONTHS[month]}, ${hour}h${minute}`);
-
   const { bodyTemp, stress, anxiety, fatigue, hunger, mood } = State;
-  stat(`Temperature`, bodyTemp, "neutral");
-  stat(`Stress`, stress, "low");
-  stat(`Anxiety`, anxiety, "low");
-  stat(`Fatigue`, fatigue, "low");
-  stat(`Hunger`, hunger, "low");
-  stat(`Mood`, mood, "high");
+  const statGrid: [StatArgs, StatArgs][] = [
+    [
+      [`Temperature`, bodyTemp, "neutral"],
+      [`Stress`, stress, "low"],
+    ],
+    [
+      [`Anxiety`, anxiety, "low"],
+      [`Fatigue`, fatigue, "low"],
+    ],
+    [
+      [`Hunger`, hunger, "low"],
+      [`Mood`, mood, "high"],
+    ],
+  ];
+
+  let row = 1;
+  for (const [l, r] of statGrid) {
+    drawStat(l, row, 0);
+    drawStat(r, row, 1);
+    row += 2;
+  }
 }
 
 function drawPet() {
-  const { petX, petY } = State;
+  const {
+    petX,
+    petY,
+    mood,
+    mouse: [mx, my],
+    attention,
+  } = State;
 
-  const x = petX + noise1D(t / 2 + 39458) * 14; // TODO: scale speed/magnitude by anxiousness?
-  const y = petY + (osc01(0.5) + noise1D(t + 1000)) * 5;
+  const adjX = petX + noise1D(t / 2 + 39458) * 14; // TODO: scale speed/magnitude by anxiousness?
+  const adjY = petY + (osc01(0.5) + noise1D(t + 1000)) * 5;
 
   const floor = petY + 110;
 
-  const bodyX = x + 20;
+  const bodyX = adjX + 20;
   const bodyY = petY + 20 + (osc01(0.5, 0.34) + noise1D(t + 4325)) * 5;
   const BODY_SIZE = 65;
 
   // shadow
   ellipse(bodyX, floor, BODY_SIZE * 1.2, BODY_SIZE * 0.3, 60, COLOR.Z_INK, 1);
-  ellipse(x, floor, HEAD_SIZE * 1.2, HEAD_SIZE * 0.3, 60, COLOR.Z_INK, 1);
+  ellipse(adjX, floor, HEAD_SIZE * 1.2, HEAD_SIZE * 0.3, 60, COLOR.Z_INK, 1);
 
   // body
   gfx.circ_fill(bodyX, bodyY, BODY_SIZE, COLOR.J_PERIWINKLE);
@@ -193,37 +234,41 @@ function drawPet() {
   ellipse(footLeft - 5, floor, 10, 5, 10, COLOR.J_PERIWINKLE);
   ellipse(footRight + 5, floor, 10, 5, 10, COLOR.J_PERIWINKLE);
 
-  const [mx, my] = input.mouse();
+  // TODO: duplicated in _update(), should be generalized as bounds for noticing anything
   const mouseNoticeThresholdX = petX + 100;
-  const focalpoint = input.mouse_over() && mx < mouseNoticeThresholdX ? "cursor" : "nothing";
+
+  // way more complicated than it needs to be on the expectation that we'll have
+  // multiple possible targets at some point (when we'll also need to do a
+  // weighted sum to get the final position)
+  const attentionX = util.clamp(mx, 0, mouseNoticeThresholdX);
+  const attentionY = my;
 
   // some fake parallax
-  const faceOffsetX =
-    focalpoint === "cursor"
-      ? util.remap(mx, 0, mouseNoticeThresholdX, -20, 10)
-      : util.remap(noise1D(t + 12020), -1, 1, 0, -10);
-
-  const faceOffsetY = focalpoint === "cursor" ? util.remap(my, 0, usagi.GAME_H, -20, 20) : 0;
-
-  // head
-  gfx.circ_fill(
-    x + (focalpoint === "cursor" ? faceOffsetX * 0.3 : 0),
-    y,
-    HEAD_SIZE,
-    COLOR.J_PERIWINKLE,
+  const faceOffsetX = util.lerp(
+    util.remap(noise1D(t + 12020), -1, 1, 0, -10),
+    util.remap(attentionX, 0, mouseNoticeThresholdX, -20, 10),
+    attention.weight.cursor,
+  );
+  const faceOffsetY = util.lerp(
+    0,
+    util.remap(attentionY, 0, usagi.GAME_H, -20, 20),
+    attention.weight.cursor,
   );
 
-  const faceX = x;
-  const faceY = y - 20;
+  const faceX = adjX;
+  const faceY = adjY - 20;
 
-  const earLeftX = x - 20 - faceOffsetX;
-  const earRightX = x + 46 + faceOffsetX * 0.5;
-  const earY = y + faceOffsetY * -0.2 - HEAD_SIZE;
+  const earLeftX = adjX - 20 - faceOffsetX * 0.6;
+  const earRightX = adjX + 46 + faceOffsetX * 0.5;
+  const earY = adjY + faceOffsetY * -0.2 - HEAD_SIZE;
   // ears
   gfx.circ_fill(earLeftX, earY - 15, 30, COLOR.J_PERIWINKLE);
   gfx.circ_fill(earLeftX, earY - 15, 15, COLOR.N_STEEL);
   gfx.circ_fill(earRightX, earY - 10, 30, COLOR.J_PERIWINKLE);
   gfx.circ_fill(earRightX, earY - 10, 15, COLOR.N_STEEL);
+
+  // head
+  gfx.circ_fill(adjX + faceOffsetX * 0.3, adjY, HEAD_SIZE, COLOR.J_PERIWINKLE);
 
   const eyeLeftX = faceX + faceOffsetX * 0.5 - (HEAD_SIZE - EYE_SIZE - 9);
   const eyeLeftY = faceY + faceOffsetY;
@@ -240,7 +285,7 @@ function drawPet() {
   }
 
   // brows
-  const concern = noise1D(t / 3 + 3924) * 0.4;
+  const concern = util.remap(mood, 0, 1, -0.6, 0.6) + noise1D(t / 3 + 3924) * 0.2;
   curve(eyeLeftX - 12, eyeLeftY - 18, eyeLeftX + 12, eyeLeftY - 16, concern, 7, PUPIL_COL);
   curve(eyeRightX - 12, eyeRightY - 18, eyeRightX + 12, eyeRightY - 16, concern, 7, PUPIL_COL);
 
@@ -257,7 +302,8 @@ function drawPet() {
   gfx.circ_fill(mouthX - 12, faceY + faceOffsetY + 18, 10, COLOR.N_STEEL);
 
   // highlight the cursor when noticed
-  if (focalpoint === "cursor") {
+  if (attention.weight.cursor > 0) {
+    const [x, y] = [mx, my];
     const lineCount = 12;
     for (let i = 0; i < lineCount; i++) {
       const oscScale = i % 2 === 0 ? 2 : 3;
@@ -268,13 +314,13 @@ function drawPet() {
       const dx = Math.cos(a);
       const dy = Math.sin(a);
       gfx.line_ex(
-        mx + dx * innerDist,
-        my + dy * innerDist,
-        mx + dx * outerDist,
-        my + dy * outerDist,
+        x + dx * innerDist,
+        y + dy * innerDist,
+        x + dx * outerDist,
+        y + dy * outerDist,
         4,
         COLOR.B_PEACH,
-        0.5 + osc01(0.5) * 0.25,
+        (0.5 + osc01(0.5) * 0.25) * attention.weight.cursor,
       );
     }
   }
