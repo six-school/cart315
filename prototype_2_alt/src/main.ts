@@ -31,6 +31,10 @@ type GameState = {
 
   mouse: [number, number];
   attention: { weight: { none: number; cursor: number } };
+
+  log: string[];
+
+  debug: boolean;
 };
 
 declare let State: GameState;
@@ -41,6 +45,7 @@ t = 0;
 
 type AttentionTarget = "cursor" | "none";
 const ATTENTION_TRANSITION_DURATION = 0.16;
+const ACTIVITY_TIME = 150;
 
 const MONTHS = [
   "Pluviôse",
@@ -55,6 +60,14 @@ const MONTHS = [
   "Brumaire",
   "Frimaire",
   "Nivôse",
+] as const;
+
+const DEBUG_ACTS = [
+  ["idle", input.KEY_1],
+  ["jobsearch", input.KEY_2],
+  ["working", input.KEY_2],
+  ["eating", input.KEY_3],
+  ["sleeping", input.KEY_4],
 ] as const;
 
 /* oscillate between -1 and 1 `freq` times per sec, offset by `phase` % (0-1) */
@@ -88,7 +101,7 @@ _init = () => {
     bankBalance: 32,
     employmentStatus: { t: "jobless" },
     activity: { t: "idle" },
-    activityTimeLeft: 15,
+    activityTimeLeft: ACTIVITY_TIME,
 
     month: 10,
     day: 20,
@@ -101,6 +114,10 @@ _init = () => {
 
     mouse: [0, 0],
     attention: { weight: { none: 1, cursor: 0 } },
+
+    log: [],
+
+    debug: false,
   };
 };
 
@@ -109,6 +126,8 @@ _update = (dt: number) => {
   // eslint-disable-next-line no-param-reassign
   if (dt > 0.0333) dt = 0.0333;
   t += dt;
+
+  updateGame(dt);
 
   State.mouse = input.mouse();
   const [mx] = State.mouse;
@@ -121,14 +140,49 @@ _update = (dt: number) => {
     State.attention.weight[k as AttentionTarget] = next;
   }
 
-  // if (State.mouse[0] > UI_X && input.mouse_held(input.MOUSE_LEFT)) {
-  //   State.mood = util.clamp(util.remap(State.mouse[0], UI_X, usagi.GAME_W, 0, 1), 0, 1);
-  // }
+  if (input.key_pressed(input.KEY_BACKTICK)) {
+    State.debug = !State.debug;
+  }
 
-  // State.activityTimeLeft -= 1;
-  // if (State.activityTimeLeft <= 0) {
-  // }
+  if (State.debug) {
+    if (input.mouse_held(input.MOUSE_LEFT) && State.mouse[0] > UI_X) {
+      State.mood = util.clamp(util.remap(State.mouse[0], UI_X, usagi.GAME_W, 0, 1), 0, 1);
+    }
+
+    for (const [a, k] of DEBUG_ACTS) {
+      if (input.key_pressed(k)) {
+        State.activity = { t: a };
+        State.activityTimeLeft = ACTIVITY_TIME;
+      }
+    }
+  }
 };
+
+function updateGame(dt: number) {
+  const elapsed = dt * 10;
+
+  State.minute += elapsed;
+  if (State.minute >= 60) {
+    State.minute = 0;
+    State.hour += 1;
+    if (State.hour >= 24) {
+      State.hour = 0;
+      State.day += 1;
+      if (State.day > 30) {
+        State.day = 1;
+        State.month += 1;
+        if (State.month >= MONTHS.length) {
+          State.month = 0;
+        }
+      }
+    }
+  }
+
+  State.activityTimeLeft -= elapsed;
+  if (State.activityTimeLeft <= 0) {
+    // pick new activity.
+  }
+}
 
 const HEAD_SIZE = 60;
 const EYE_SIZE = 12;
@@ -141,8 +195,18 @@ _draw = () => {
   // wall/backdrop
   gfx.rect_fill(0, 0, usagi.GAME_W, usagi.GAME_H * 0.65, COLOR.X_PLUM);
 
-  drawUI(); // behind the pet
+  drawBars(); // behind the pet
+  drawLog();
   drawPet();
+
+  if (State.debug) {
+    gfx.text(
+      `DEBUG\t(${State.activity.t}, ${Math.round(State.activityTimeLeft)})`,
+      60,
+      0,
+      COLOR.A_PALE_LIME,
+    );
+  }
 };
 
 const UI_X = 320;
@@ -151,9 +215,10 @@ const BAR_WIDTH = 140;
 const SPACING = 24;
 const UI_SCALE = [COLOR.D_BLUSH, COLOR.G_DUSTY_ROSE, COLOR.C_BONE, COLOR.F_SAGE, COLOR.A_PALE_LIME];
 
-function drawUI() {
+function drawBars() {
   const { day, month, hour, minute } = State;
-  gfx.text_ex(`${day} ${MONTHS[month]}, ${hour}h${minute}`, UI_X, UI_Y, 2, 0, COLOR.A_PALE_LIME, 1);
+  const time = `${day} ${MONTHS[month]}, ${hour}h${string.format("%02d", math.floor(minute))}`;
+  gfx.text_ex(time, UI_X, UI_Y, 2, 0, COLOR.A_PALE_LIME, 1);
 
   type StatArgs = [text: string, amount: number, preference: "low" | "neutral" | "high"];
 
@@ -178,16 +243,16 @@ function drawUI() {
   const { bodyTemp, stress, anxiety, fatigue, hunger, mood } = State;
   const statGrid: [StatArgs, StatArgs][] = [
     [
-      [`Temperature`, bodyTemp, "neutral"],
-      [`Stress`, stress, "low"],
+      ["Temperature", bodyTemp, "neutral"],
+      ["Stress", stress, "low"],
     ],
     [
-      [`Anxiety`, anxiety, "low"],
-      [`Fatigue`, fatigue, "low"],
+      ["Anxiety", anxiety, "low"],
+      ["Fatigue", fatigue, "low"],
     ],
     [
-      [`Hunger`, hunger, "low"],
-      [`Mood`, mood, "high"],
+      ["Hunger", hunger, "low"],
+      ["Mood", mood, "high"],
     ],
   ];
 
@@ -199,6 +264,16 @@ function drawUI() {
   }
 }
 
+const LOG_Y = 190;
+
+function drawLog() {
+  const { log } = State;
+  gfx.rect_fill(UI_X, LOG_Y, BAR_WIDTH * 2 + SPACING, 160, COLOR.Z_INK, 0.6);
+  for (let i = 0; i < log.length; i++) {
+    gfx.text(log[i], UI_X + 5, LOG_Y + i * 16, COLOR.A_PALE_LIME, 0.8);
+  }
+}
+
 function drawPet() {
   const {
     petX,
@@ -206,6 +281,8 @@ function drawPet() {
     mood,
     mouse: [mx, my],
     attention,
+    activity,
+    activityTimeLeft,
   } = State;
 
   const adjX = petX + noise1D(t / 2 + 39458) * 14; // TODO: scale speed/magnitude by anxiousness?
@@ -293,13 +370,41 @@ function drawPet() {
   const mouthX = faceX + faceOffsetX * 0.6;
   const mouthMidY = faceY + faceOffsetY + 26;
   // tongue
-  gfx.circ_fill(mouthX - 10, mouthMidY + 9 + osc(0.6) * 2, 4, COLOR.D_BLUSH);
+  const tongueX = mouthX - 10;
+  const tongueY = mouthMidY + 9 + osc(0.6) * 2;
+  gfx.circ_fill(tongueX, tongueY, 4, COLOR.D_BLUSH);
   // :3
   curve(mouthX - 30, mouthMidY - 2, mouthX - 10, mouthMidY, -0.9, 5, PUPIL_COL);
   curve(mouthX - 10, mouthMidY, mouthX + 10, mouthMidY + 2, -0.9, 5, PUPIL_COL);
 
   // nose
   gfx.circ_fill(mouthX - 12, faceY + faceOffsetY + 18, 10, COLOR.N_STEEL);
+
+  // draw activity
+  switch (activity.t) {
+    case "jobsearch":
+      break;
+    case "eating": {
+      const bottleX = petX - 100;
+      const bottleY = floor + 5;
+      const bottleW = 50;
+      const bottleH = 70;
+      const stuffLeft = ((activityTimeLeft - 15) / (ACTIVITY_TIME - 10)) * bottleH;
+      const stuffCol = COLOR.D_BLUSH;
+      ellipse(bottleX + bottleW / 2, bottleY, bottleW / 2 + 3, 10, 60, COLOR.Z_INK, 0.5);
+      gfx.rect_fill(bottleX, bottleY - bottleH, 50, bottleH, COLOR.M_SLATE, 0.5);
+      gfx.rect_fill(bottleX, bottleY - stuffLeft, 50, stuffLeft, stuffCol, 0.5);
+      const strawX1 = bottleX + bottleW / 2;
+      const strawX2 = strawX1 + 20 + (adjX - petX);
+      const strawY1 = bottleY - bottleH - 20;
+      const strawCol = stuffLeft > 0 ? stuffCol : COLOR.M_SLATE;
+      gfx.line_ex(strawX1, bottleY - 1, strawX2, strawY1, 4, strawCol, 0.7);
+      gfx.line_ex(strawX2, strawY1, tongueX, tongueY, 4, strawCol, 0.7);
+      break;
+    }
+    default:
+      break;
+  }
 
   // highlight the cursor when noticed
   if (attention.weight.cursor > 0) {
