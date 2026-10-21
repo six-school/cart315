@@ -1,6 +1,7 @@
 import { noise1D } from "./noise";
 import { COLOR } from "./palette";
 import { curve, ellipse } from "./shapes";
+import { randomInArray } from "./util";
 
 type GameState = {
   petX: number;
@@ -43,6 +44,7 @@ declare let t: number;
 // elapsed game time (slower than wall time if game slows down!)
 t = 0;
 
+type StatusField = "bodyTemp" | "stress" | "anxiety" | "fatigue" | "hunger" | "mood";
 type AttentionTarget = "cursor" | "none";
 const ATTENTION_TRANSITION_DURATION = 0.16;
 const ACTIVITY_TIME = 150;
@@ -180,39 +182,176 @@ function updateGame(dt: number) {
   }
 
   const FATIGUE_FACTOR = 0.01;
-  const REST_FACTOR = 0.018;
+  const REST_FACTOR = 0.016;
 
   const HUNGER_FACTOR = 0.01;
-  const EAT_FACTOR = 0.03;
+  const EAT_FACTOR = 0.02;
+
+  const addTo = (k: StatusField, val: number) => {
+    State[k] = clamp01(State[k] + val);
+  };
 
   const act = State.activity.t;
   if (act === "sleeping") {
-    State.fatigue = clamp01(State.fatigue - dt * REST_FACTOR);
+    addTo("fatigue", -dt * REST_FACTOR);
+    addTo("stress", -dt * 0.002);
+    addTo("anxiety", -dt * 0.002);
   } else {
-    const actFactor = act === "working" ? 2 : act === "jobsearch" ? 1.5 : 1;
+    const actFactor =
+      act === "working" ? 2 : act === "jobsearch" ? 1.5 : act === "eating" ? 0.7 : 1;
     const timeFactor = State.hour < 6 ? 2 : 1;
     const mult = actFactor * timeFactor;
-    State.fatigue = clamp01(State.fatigue + dt * FATIGUE_FACTOR * mult);
+    addTo("fatigue", dt * FATIGUE_FACTOR * mult);
   }
 
   if (act === "eating") {
-    State.hunger = clamp01(State.hunger - dt * EAT_FACTOR);
+    addTo("hunger", -dt * EAT_FACTOR);
+    addTo("stress", -dt * 0.005);
+    addTo("anxiety", -dt * 0.003);
   } else {
-    const factor = act === "working" ? 1.7 : act === "jobsearch" ? 1.2 : 1;
-    State.hunger = clamp01(State.hunger + dt * HUNGER_FACTOR * factor);
+    const factor =
+      act === "working" ? 1.7 : act === "jobsearch" ? 1.2 : act === "sleeping" ? 0.6 : 1;
+    addTo("hunger", dt * HUNGER_FACTOR * factor);
+  }
+
+  if (act === "jobsearch") {
+    addTo("stress", dt * 0.02);
+    addTo("anxiety", dt * 0.016);
+  }
+
+  if (act === "idle") {
+    addTo("anxiety", dt * 0.004);
+    addTo("stress", -dt * 0.004);
   }
 
   if (State.fatigue > 0.75 && act !== "sleeping") {
-    State.mood = clamp01(State.mood - dt * 0.01);
+    addTo("mood", -dt * 0.01);
+    addTo("stress", dt * 0.0055);
   }
   if (State.hunger > 0.75 && act !== "eating") {
-    State.mood = clamp01(State.mood - dt * 0.01);
+    addTo("mood", -dt * 0.01);
+    addTo("stress", dt * 0.0045);
   }
 
   State.activityTimeLeft -= elapsed;
   if (State.activityTimeLeft <= 0) {
-    // pick new activity.
+    pickNewActivity();
   }
+}
+
+function appendToLog(text: string) {
+  State.log.push(text);
+  while (State.log.length > 10) {
+    State.log.shift();
+  }
+}
+
+function getMoodString() {
+  const m = State.mood;
+
+  // could be salience-based too... someday...
+  if (m < 0.2) {
+    return randomInArray([
+      "Rough day!",
+      ";_;",
+      "Not doing too hot...",
+      "This stinks!",
+      "Why is life like this...",
+      "Time to lie on the floor.",
+    ]);
+  }
+  if (m < 0.4) {
+    return randomInArray([
+      "Could be better...",
+      "Kinda cranky.",
+      "Tired of this...",
+      "Don't feel like doing anything.",
+    ]);
+  }
+  if (m < 0.6) {
+    return randomInArray([
+      "Hanging in there...",
+      "Keep on truckin'.",
+      "Awright.",
+      "Doing okay.",
+      "Just fine.",
+      "Doing fine.",
+      "Doing just fine.",
+    ]);
+  }
+  if (m < 0.8) {
+    return randomInArray([
+      "Doing well.",
+      "Got it together.",
+      "Hey, this isn't so bad!",
+      "Hey, this isn't so hard!",
+      "Not bad!",
+      "Not half-bad!",
+      "Could get used to this!",
+    ]);
+  }
+  return randomInArray([
+    "Never been better!",
+    "Out of the way, world!",
+    "Unstoppable!",
+    "This is easy!",
+  ]);
+}
+
+// again, salience would be nice...
+// integrating tracery for variety would also be easy/fun...
+const sleepQuips = ["Time for bed.", "Bedtime.", "Sleepy time."];
+const eatQuips = ["Time to eat.", "Hungry.", "Chow time."];
+const jobSearchQuips = [
+  "Time to find work.",
+  "Need a job...",
+  "Need a job... wonder what's out there.",
+  "Time to email some cover letters.",
+  "Time to email some CVs.",
+  "Ready to cold apply to some gigs.",
+  "Ready to get some automated rejection letters.",
+];
+
+type ActivityDef = { name: GameState["activity"]["t"]; score: () => number; enter: () => void };
+const activities: ActivityDef[] = [
+  {
+    name: "sleeping",
+    score: () => State.fatigue ** 2,
+    enter: () => appendToLog(randomInArray(sleepQuips)),
+  },
+  {
+    name: "eating",
+    score: () => State.hunger ** 2,
+    enter: () => appendToLog(randomInArray(eatQuips)),
+  },
+  {
+    name: "jobsearch",
+    score: () => State.mood ** 0.8 * 0.5,
+    enter: () => appendToLog(randomInArray(jobSearchQuips)),
+  },
+  {
+    name: "idle",
+    score: () => Math.random() * 0.6 + util.remap(State.mood, 0, 1, 0.2, 0),
+    enter: () => appendToLog(getMoodString()),
+  },
+];
+
+function pickNewActivity() {
+  let bestScore = -1;
+  let bestActivity;
+  for (const a of activities) {
+    const s = a.score() * (a.name === State.activity.t ? 0.7 : 1);
+    if (State.debug) appendToLog(`DEBUG: ${a.name} => ${s.toFixed(2)}`);
+    if (s > bestScore) {
+      bestScore = s;
+      bestActivity = a;
+    }
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- false poz
+  const { name, enter } = bestActivity!;
+  State.activity = { t: name };
+  State.activityTimeLeft = ACTIVITY_TIME;
+  enter();
 }
 
 const HEAD_SIZE = 60;
