@@ -118,7 +118,7 @@ _init = () => {
     mouse: [0, 0],
     attention: { weight: { none: 1, cursor: 0 } },
 
-    log: [],
+    log: ([] as string[]).fill("", 0, 10),
 
     debug: false,
   };
@@ -224,13 +224,20 @@ function updateGame(dt: number) {
     addTo("stress", -dt * 0.004);
   }
 
+  let moodDeclined = false;
   if (State.fatigue > 0.75 && act !== "sleeping") {
     addTo("mood", -dt * 0.01);
+    moodDeclined = true;
     addTo("stress", dt * 0.0055);
   }
   if (State.hunger > 0.75 && act !== "eating") {
     addTo("mood", -dt * 0.01);
+    moodDeclined = true;
     addTo("stress", dt * 0.0045);
+  }
+
+  if (!moodDeclined && State.mood < 0.4) {
+    addTo("mood", dt * 0.007);
   }
 
   State.activityTimeLeft -= elapsed;
@@ -300,8 +307,8 @@ function getMoodString() {
 
 // again, salience would be nice...
 // integrating tracery for variety would also be easy/fun...
-const sleepQuips = ["Time for bed.", "Bedtime.", "Sleepy time."];
-const eatQuips = ["Time to eat.", "Hungry.", "Chow time."];
+const sleepQuips = ["Time for bed.", "Bedtime.", "Sleepy time.", "Sleep.", "Sleep time."];
+const eatQuips = ["Time to eat.", "Hungry.", "Chow time.", "Gotta eat."];
 const jobSearchQuips = [
   "Time to find work.",
   "Need a job...",
@@ -440,7 +447,13 @@ function drawLog() {
   const { log } = State;
   gfx.rect_fill(UI_X, LOG_Y, BAR_WIDTH * 2 + SPACING, 160, COLOR.Z_INK, 0.6);
   for (let i = 0; i < log.length; i++) {
-    gfx.text(log[i], UI_X + 5, LOG_Y + i * 16, COLOR.A_PALE_LIME, 0.8);
+    gfx.text(
+      log[i],
+      UI_X + 5,
+      LOG_Y + i * 16,
+      COLOR.A_PALE_LIME,
+      util.remap(i, 0, log.length, 0.3, 0.8),
+    );
   }
 }
 
