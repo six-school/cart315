@@ -1,0 +1,34 @@
+name: Build Usagi
+description: Export an Usagi project for web
+
+inputs:
+  project:
+    description: Path to the project folder
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@ac5bf11548bf5e19b8aadb8182072616590fa4a6
+      with:
+        package_json_file: ${{ inputs.project }}/package.json
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: ${{ inputs.project }}/.node-version
+    - name: Download Usagi
+      shell: bash
+      working-directory: ${{ inputs.project }}
+      run: |
+        USAGI_VERSION="$(cat .usagi-version)"
+        url="https://github.com/brettchalupa/usagi/releases/download/v$USAGI_VERSION/usagi-$USAGI_VERSION-linux-x86_64.tar.gz"
+        curl --fail --location --silent --show-error "$url" -o usagi.tar.gz
+        mkdir -p bin
+        tar -xzf usagi.tar.gz -O ./usagi > bin/usagi
+        chmod +x ./bin/usagi
+    - name: Build
+      shell: bash
+      working-directory: ${{ inputs.project }}
+      run: |
+        pnpm install --frozen-lockfile
+        pnpm build
+        unzip -q export/web.zip -d export/_site

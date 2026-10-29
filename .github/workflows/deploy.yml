@@ -1,0 +1,77 @@
+name: Build and deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { project: prototype_1_pong, engine: usagi }
+          - { project: prototype_2_alt, engine: usagi }
+          - { project: prototype_3, engine: godot }
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Restore previous build
+        id: restore
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ matrix.project }}/export/_site
+          key: site-${{ matrix.project }}-${{ hashFiles(format('{0}/**', matrix.project), '.github/**') }}
+      - uses: ./.github/actions/build-usagi
+        if: steps.restore.outputs.cache-hit != 'true' && matrix.engine == 'usagi'
+        with:
+          project: ${{ matrix.project }}
+      - uses: ./.github/actions/build-godot
+        if: steps.restore.outputs.cache-hit != 'true' && matrix.engine == 'godot'
+        with:
+          project: ${{ matrix.project }}
+      - name: Save build
+        if: steps.restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ matrix.project }}/export/_site
+          key: ${{ steps.restore.outputs.cache-primary-key }}
+      - name: Upload build
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.project }}
+          path: ${{ matrix.project }}/export/_site
+          if-no-files-found: error
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Download all builds
+        uses: actions/download-artifact@v8
+        with:
+          path: _site
+      - uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
