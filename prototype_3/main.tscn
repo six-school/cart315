@@ -38,8 +38,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8922603, 5.0202155, -3.2011
 shadow_enabled = true
 
 [node name="OmniLight3D2" type="OmniLight3D" parent="." unique_id=1841146998]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.450048, 4.495526, 3.6777215)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.450048, 4.495526, 3.7350402)
+light_energy = 1.525
+light_indirect_energy = 1.07
+light_size = 0.636
 shadow_enabled = true
+omni_range = 9.481
 
 [node name="Player" type="CharacterBody3D" parent="." unique_id=2037912429]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.1283102, 1.112685, 2)
@@ -50,3 +54,4 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("CylinderShape3D_7mycd")
 
 [node name="test-env" parent="." unique_id=1537660939 instance=ExtResource("5_lquwl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0137758255, -0.012896061, -0.040951967)

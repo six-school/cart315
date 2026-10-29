@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://c1m1xfmsa4e03"]
+
+[ext_resource type="Shader" uid="uid://3lpkptx5a058" path="res://models/sky.gdshader" id="1_5broy"]
+[ext_resource type="Texture2D" uid="uid://bio6r4ggf2ty4" path="res://models/test-env_rogland_clear_night_1k.png" id="2_nxpps"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_5broy")
+shader_parameter/panorama = ExtResource("2_nxpps")
+shader_parameter/energy = 1.0
+shader_parameter/rotation_degrees = 0.0
