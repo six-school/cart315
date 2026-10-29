@@ -1,7 +1,7 @@
 shader_type spatial;
 render_mode unshaded, fog_disabled;
 
-uniform sampler2D panorama : source_color, filter_linear_mipmap, repeat_enable;
+uniform sampler2D panorama : source_color, filter_nearest_mipmap, repeat_enable;
 uniform float energy = 1.0;
 uniform float rotation_degrees = 0.0;
 
