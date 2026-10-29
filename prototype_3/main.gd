@@ -2,6 +2,8 @@ extends Node3D
 
 @onready var a: FeluccaSource3D = $A
 @onready var b: FeluccaSource3D = $B
+@onready var a2: FeluccaSource3D = $A2
+@onready var b2: FeluccaSource3D = $B2
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -11,6 +13,8 @@ func _ready() -> void:
 	FeluccaConductor.play()
 	a.play()
 	b.play()
+	a2.play()
+	b2.play()
 	var t := create_tween().set_loops()
 	t.tween_method(func(bpm: float) -> void: FeluccaConductor.tempo = bpm, float(project.bpm), 80.0, 8.0).set_delay(4.0)
 	t.tween_method(func(bpm: float) -> void: FeluccaConductor.tempo = bpm, 80.0, float(project.bpm), 8.0).set_delay(4.0)
