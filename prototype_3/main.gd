@@ -22,7 +22,7 @@ func _ready() -> void:
 		_pulse_on_kicks(s)
 
 func _pulse_on_kicks(s: FeluccaSource3D) -> void:
-	var sphere := s.get_node("orb") as CSGSphere3D
+	var sphere := s.get_node("orb") as CSGPrimitive3D
 	for part: FeluccaPart in s.parts:
 		if part.engine == FeluccaPart.Engine.ENGINE_DRUM:
 			part.on_hit.connect(func(lane: int, _velocity: int) -> void:

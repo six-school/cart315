@@ -7,24 +7,31 @@
 [ext_resource type="FeluccaProject" uid="uid://ba6n2ov2o2pco" path="res://music/test-song-3.felucca" id="3_7mycd"]
 [ext_resource type="Script" uid="uid://d3ys01ijanw8l" path="res://fps_controller.gd" id="4_1bvp3"]
 [ext_resource type="PackedScene" uid="uid://b0wmpnwjlvy2t" path="res://models/test-env.glb" id="5_lquwl"]
+[ext_resource type="LightmapGIData" uid="uid://slk3v0xdja2j" path="res://models/main.lmbake" id="8_5vw27"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f0702"]
 albedo_color = Color(1, 0, 0, 1)
 emission_enabled = true
 emission = Color(0.6706895, 0.6706895, 0.6706895, 1)
+disable_receive_shadows = true
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tg68e"]
 albedo_color = Color(0, 0, 1, 1)
 emission_enabled = true
 emission = Color(0.5931336, 0.59313357, 0.59313357, 1)
+disable_receive_shadows = true
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lquwl"]
 transparency = 1
-cull_mode = 1
-albedo_color = Color(1, 1, 1, 0.57254905)
+emission_enabled = true
+emission = Color(0.99340016, 0.8605324, 0.5970776, 1)
+emission_energy_multiplier = 6.0
+disable_receive_shadows = true
 
 [sub_resource type="SphereMesh" id="SphereMesh_f0702"]
+lightmap_size_hint = Vector2i(9, 5)
 material = SubResource("StandardMaterial3D_lquwl")
+add_uv2 = true
 radius = 0.25
 height = 0.5
 rings = 8
@@ -44,21 +51,31 @@ material = SubResource("StandardMaterial3D_f0702")
 
 [node name="A2" type="FeluccaSource3D" parent="." unique_id=400019640]
 project = ExtResource("3_7mycd")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.180567, 11.412993, -7.0774574)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.256224, 11.412993, -7.0774574)
 max_distance = 7.0
 
 [node name="orb" type="CSGSphere3D" parent="A2" unique_id=1669534559]
 material = SubResource("StandardMaterial3D_f0702")
+
+[node name="OmniLight3D2" type="OmniLight3D" parent="A2" unique_id=1570751842]
+transform = Transform3D(0.9025457, 0.18504421, 0.38880575, 0.04148876, 0.8613793, -0.5062651, -0.42859063, 0.47305846, 0.769757, 0, 0, 0)
+light_color = Color(0.5773497, 0.06352342, 0.44517285, 1)
+shadow_enabled = true
+omni_range = 13.58311
 
 [node name="B" type="FeluccaSource3D" parent="." unique_id=724272638]
 project = ExtResource("3_1bvp3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.784021, 3.2281938, 2.6362565)
 max_distance = 7.0
 
-[node name="orb" type="CSGSphere3D" parent="B" unique_id=1811086006]
+[node name="orb" type="CSGBox3D" parent="B" unique_id=939412987]
+transform = Transform3D(0.9025457, 0.18504423, 0.3888057, 0.04148876, 0.8613793, -0.50626516, -0.42859063, 0.47305846, 0.7697569, 0, 0, 0)
 material = SubResource("StandardMaterial3D_tg68e")
 
 [node name="OmniLight3D" type="OmniLight3D" parent="B/orb" unique_id=1710774955]
+light_color = Color(0, 0, 1, 1)
+shadow_enabled = true
+omni_range = 6.4654202
 
 [node name="B2" type="FeluccaSource3D" parent="." unique_id=2030326726]
 project = ExtResource("2_xkn7e")
@@ -68,124 +85,72 @@ max_distance = 7.0
 [node name="orb" type="CSGSphere3D" parent="B2" unique_id=392159629]
 material = SubResource("StandardMaterial3D_tg68e")
 
-[node name="OmniLight3D" type="OmniLight3D" parent="B2/orb" unique_id=2006280781]
-
-[node name="OmniLight3D" type="OmniLight3D" parent="." unique_id=428200676]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8922603, 5.0202155, -3.20113)
-shadow_enabled = true
-
 [node name="Lights" type="Node3D" parent="." unique_id=1833586539]
 
 [node name="Sconce" type="MeshInstance3D" parent="Lights" unique_id=157491501]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8084335, 1.9839358, 4.6896462)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.695086, 1.9839358, 4.6896462)
 mesh = SubResource("SphereMesh_f0702")
 
-[node name="OmniLight3D2" type="OmniLight3D" parent="Lights/Sconce" unique_id=1841146998]
-light_color = Color(1, 1, 0.8627451, 1)
-light_energy = 1.525
-light_indirect_energy = 1.07
-light_size = 0.636
-shadow_enabled = true
-omni_range = 9.481
+[node name="Sconce13" type="MeshInstance3D" parent="Lights" unique_id=2124303988]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.695086, 2.705283, -0.31035376)
+mesh = SubResource("SphereMesh_f0702")
 
 [node name="Sconce2" type="MeshInstance3D" parent="Lights" unique_id=685613004]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8084335, 1.9839358, -4.950817)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.695086, 1.9839358, -4.950817)
 mesh = SubResource("SphereMesh_f0702")
-
-[node name="OmniLight3D2" type="OmniLight3D" parent="Lights/Sconce2" unique_id=921618075]
-light_color = Color(1, 1, 0.8627451, 1)
-light_energy = 1.525
-light_indirect_energy = 1.07
-light_size = 0.636
-shadow_enabled = true
-omni_range = 9.481
 
 [node name="Sconce8" type="MeshInstance3D" parent="Lights" unique_id=839162896]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.292847, 1.9839358, -3.9536512)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.292847, 1.9839358, -3.8175044)
+visible = false
 mesh = SubResource("SphereMesh_f0702")
-
-[node name="OmniLight3D2" type="OmniLight3D" parent="Lights/Sconce8" unique_id=1998870094]
-light_color = Color(1, 1, 0.8627451, 1)
-light_energy = 1.525
-light_indirect_energy = 1.07
-light_size = 0.636
-shadow_enabled = true
-omni_range = 9.481
 
 [node name="Sconce9" type="MeshInstance3D" parent="Lights" unique_id=338363065]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.292847, 1.9839358, 3.7571242)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.292847, 1.9839358, 3.672837)
+visible = false
 mesh = SubResource("SphereMesh_f0702")
-
-[node name="OmniLight3D2" type="OmniLight3D" parent="Lights/Sconce9" unique_id=302851329]
-light_color = Color(1, 1, 0.8627451, 1)
-light_energy = 1.525
-light_indirect_energy = 1.07
-light_size = 0.636
-shadow_enabled = true
-omni_range = 9.481
 
 [node name="Sconce3" type="MeshInstance3D" parent="Lights" unique_id=1765998348]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8084335, 5.983936, 4.9343734)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.695086, 5.983936, 4.9343734)
 mesh = SubResource("SphereMesh_f0702")
 
-[node name="OmniLight3D2" type="OmniLight3D" parent="Lights/Sconce3" unique_id=198400872]
-light_color = Color(1, 1, 0.8627451, 1)
-light_energy = 1.525
-light_indirect_energy = 1.07
-light_size = 0.636
-shadow_enabled = true
-omni_range = 9.481
+[node name="Sconce14" type="MeshInstance3D" parent="Lights" unique_id=982409437]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.695086, 5.983936, -1.0656266)
+mesh = SubResource("SphereMesh_f0702")
+
+[node name="Sconce16" type="MeshInstance3D" parent="Lights" unique_id=1809950900]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.93345, 5.983936, -6.6681557)
+mesh = SubResource("SphereMesh_f0702")
 
 [node name="Sconce7" type="MeshInstance3D" parent="Lights" unique_id=866324101]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.927709, 3.7221956, 0.17185283)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.7375546, 3.7221956, 0.17185283)
 mesh = SubResource("SphereMesh_f0702")
 
-[node name="OmniLight3D2" type="OmniLight3D" parent="Lights/Sconce7" unique_id=1276525682]
-light_color = Color(1, 1, 0.8627451, 1)
-light_energy = 1.525
-light_indirect_energy = 1.07
-light_size = 0.063
-shadow_enabled = true
-omni_range = 9.481
+[node name="Sconce12" type="MeshInstance3D" parent="Lights" unique_id=230679534]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.737555, 3.7221956, -1.3395071)
+mesh = SubResource("SphereMesh_f0702")
+
+[node name="Sconce10" type="MeshInstance3D" parent="Lights" unique_id=2077592536]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.7375546, 7.7221956, 0.17185283)
+mesh = SubResource("SphereMesh_f0702")
+
+[node name="Sconce11" type="MeshInstance3D" parent="Lights" unique_id=64222958]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.7375546, 11.722196, 0.17185283)
+mesh = SubResource("SphereMesh_f0702")
 
 [node name="Sconce4" type="MeshInstance3D" parent="Lights" unique_id=293301910]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8084335, 5.983936, -2.3103538)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.695086, 5.983936, -2.3103538)
 mesh = SubResource("SphereMesh_f0702")
-
-[node name="OmniLight3D2" type="OmniLight3D" parent="Lights/Sconce4" unique_id=720222886]
-light_color = Color(1, 1, 0.8627451, 1)
-light_energy = 1.525
-light_indirect_energy = 1.07
-light_size = 0.636
-shadow_enabled = true
-omni_range = 9.481
 
 [node name="Sconce5" type="MeshInstance3D" parent="Lights" unique_id=245662485]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8084335, 9.983936, 3.6896462)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.695086, 9.983936, 3.6896462)
 mesh = SubResource("SphereMesh_f0702")
-
-[node name="OmniLight3D2" type="OmniLight3D" parent="Lights/Sconce5" unique_id=1213196321]
-light_color = Color(1, 1, 0.8627451, 1)
-light_energy = 1.525
-light_indirect_energy = 1.07
-light_size = 0.636
-shadow_enabled = true
-omni_range = 9.481
 
 [node name="Sconce6" type="MeshInstance3D" parent="Lights" unique_id=495210992]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8084335, 9.983936, -2.3103538)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.695086, 9.983936, -2.3103538)
 mesh = SubResource("SphereMesh_f0702")
 
-[node name="OmniLight3D2" type="OmniLight3D" parent="Lights/Sconce6" unique_id=1763598164]
-light_color = Color(1, 1, 0.8627451, 1)
-light_energy = 1.525
-light_indirect_energy = 1.07
-light_size = 0.636
-shadow_enabled = true
-omni_range = 9.481
-
 [node name="Player" type="CharacterBody3D" parent="." unique_id=2037912429]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.077653, 0.30673784, -0.050646067)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -10.077653, 0.30673784, -0.050646067)
 script = ExtResource("4_1bvp3")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=2103723222]
@@ -194,3 +159,11 @@ shape = SubResource("CylinderShape3D_7mycd")
 
 [node name="test-env" parent="." unique_id=1537660939 instance=ExtResource("5_lquwl")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0137758255, -0.012896061, -0.040951967)
+metadata/_edit_lock_ = true
+
+[node name="LightmapGI" type="LightmapGI" parent="." unique_id=1401703757]
+quality = 2
+supersampling = true
+bounces = 8
+texel_scale = 10.0
+light_data = ExtResource("8_5vw27")
