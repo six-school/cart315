@@ -5,9 +5,14 @@
 [ext_resource type="FeluccaProject" uid="uid://kbf7b42vyd28" path="res://music/test-song-4.felucca" id="2_xkn7e"]
 [ext_resource type="FeluccaProject" uid="uid://dqr5stjblexvq" path="res://music/test-song-2.felucca" id="3_1bvp3"]
 [ext_resource type="FeluccaProject" uid="uid://ba6n2ov2o2pco" path="res://music/test-song-3.felucca" id="3_7mycd"]
+[ext_resource type="Script" uid="uid://bbem0hhfflhv7" path="res://scripts/custom_distance_falloff.gd" id="3_kek77"]
 [ext_resource type="Script" uid="uid://d3ys01ijanw8l" path="res://fps_controller.gd" id="4_1bvp3"]
 [ext_resource type="PackedScene" uid="uid://b0wmpnwjlvy2t" path="res://models/test-env.glb" id="5_lquwl"]
 [ext_resource type="LightmapGIData" uid="uid://slk3v0xdja2j" path="res://models/main.lmbake" id="8_5vw27"]
+
+[sub_resource type="Curve" id="Curve_f0702"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.66341466, 1), 0.0, 0.0, 0, 0, Vector2(0.83902436, 0.115151525), -2.2363615, -2.2363615, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 4
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f0702"]
 albedo_color = Color(1, 0, 0, 1)
@@ -36,15 +41,37 @@ radius = 0.25
 height = 0.5
 rings = 8
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kek77"]
+transparency = 1
+emission_enabled = true
+emission = Color(2.1213253, 1.8442161, 1.2981482, 1)
+disable_receive_shadows = true
+
+[sub_resource type="SphereMesh" id="SphereMesh_4c57u"]
+lightmap_size_hint = Vector2i(5, 3)
+material = SubResource("StandardMaterial3D_kek77")
+add_uv2 = true
+radius = 0.1
+height = 0.2
+rings = 8
+
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_7mycd"]
 
 [node name="Main" type="Node3D" unique_id=305689118]
 script = ExtResource("1_xkn7e")
 
 [node name="A" type="FeluccaSource3D" parent="." unique_id=1815355735]
+muted_parts = 14
 project = ExtResource("2_lquwl")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8601311, 6.5256453, -0.18230414)
-max_distance = 12.0
+max_distance = 10.85
+panning_strength = 0.4
+emission_angle_filter_attenuation_db = -57.8
+attenuation_filter_cutoff_hz = 5359.0
+attenuation_filter_db = -36.9
+script = ExtResource("3_kek77")
+falloff = SubResource("Curve_f0702")
+ignore_y = true
 
 [node name="orb" type="CSGSphere3D" parent="A" unique_id=201911833]
 material = SubResource("StandardMaterial3D_f0702")
@@ -113,6 +140,26 @@ mesh = SubResource("SphereMesh_f0702")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.695086, 5.983936, 4.9343734)
 mesh = SubResource("SphereMesh_f0702")
 
+[node name="Sconce15" type="MeshInstance3D" parent="Lights" unique_id=1555997712]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.21169817, 6.9213233, 5.818399)
+mesh = SubResource("SphereMesh_4c57u")
+
+[node name="Sconce18" type="MeshInstance3D" parent="Lights" unique_id=533817248]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.21169817, 10.921324, 5.818399)
+mesh = SubResource("SphereMesh_4c57u")
+
+[node name="Sconce17" type="MeshInstance3D" parent="Lights" unique_id=2114173697]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.21169817, 2.9213233, 5.818399)
+mesh = SubResource("SphereMesh_4c57u")
+
+[node name="Sconce19" type="MeshInstance3D" parent="Lights" unique_id=699676368]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.21169817, 8.921324, -5.9158826)
+mesh = SubResource("SphereMesh_4c57u")
+
+[node name="Sconce20" type="MeshInstance3D" parent="Lights" unique_id=2060238879]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.21169817, 4.9213233, -5.9158826)
+mesh = SubResource("SphereMesh_4c57u")
+
 [node name="Sconce14" type="MeshInstance3D" parent="Lights" unique_id=982409437]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.695086, 5.983936, -1.0656266)
 mesh = SubResource("SphereMesh_f0702")
@@ -126,7 +173,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.7375546, 3.7221956, 0.17185
 mesh = SubResource("SphereMesh_f0702")
 
 [node name="Sconce12" type="MeshInstance3D" parent="Lights" unique_id=230679534]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.737555, 3.7221956, -1.3395071)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.737555, 3.7221956, -1.3395071)
 mesh = SubResource("SphereMesh_f0702")
 
 [node name="Sconce10" type="MeshInstance3D" parent="Lights" unique_id=2077592536]
