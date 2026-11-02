@@ -45,6 +45,7 @@ rings = 8
 transparency = 1
 emission_enabled = true
 emission = Color(2.1213253, 1.8442161, 1.2981482, 1)
+emission_energy_multiplier = 0.7
 disable_receive_shadows = true
 
 [sub_resource type="SphereMesh" id="SphereMesh_4c57u"]
@@ -165,7 +166,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.695086, 5.983936, -1.06562
 mesh = SubResource("SphereMesh_f0702")
 
 [node name="Sconce16" type="MeshInstance3D" parent="Lights" unique_id=1809950900]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.93345, 5.983936, -6.6681557)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.228561, 5.983936, -6.6681557)
+mesh = SubResource("SphereMesh_f0702")
+
+[node name="Sconce21" type="MeshInstance3D" parent="Lights" unique_id=1634407519]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.328256, 5.983936, -6.6681557)
 mesh = SubResource("SphereMesh_f0702")
 
 [node name="Sconce7" type="MeshInstance3D" parent="Lights" unique_id=866324101]
@@ -209,7 +214,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0137758255, -0.012896061, -
 metadata/_edit_lock_ = true
 
 [node name="LightmapGI" type="LightmapGI" parent="." unique_id=1401703757]
-quality = 2
+quality = 3
 supersampling = true
 bounces = 8
 texel_scale = 10.0
