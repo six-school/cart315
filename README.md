@@ -12,6 +12,6 @@
 
 [Journal 2: Hard Swerve](journal/2.md)
 
-[Prototype 3: Weird Apartment](prototype_3) [Play online](https://six-school.github.io/cart315/prototype_3)
+[Prototype 3: Weird Apartment](prototype_3) ([Play online](https://six-school.github.io/cart315/prototype_3))
 
 [Journal 3: Weird Times](journal/3.md)
