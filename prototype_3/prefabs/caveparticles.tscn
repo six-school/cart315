@@ -1,0 +1,66 @@
+[gd_scene format=3 uid="uid://byfmv8kv0wb0j"]
+
+[sub_resource type="Curve" id="Curve_hedi2"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.8938548, 0.19047624), -2.8992572, -2.8992572, 0, 0, Vector2(1, 0), -3.1249292, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_rsoia"]
+curve = SubResource("Curve_hedi2")
+
+[sub_resource type="Curve" id="Curve_2iccn"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.9385475, 0.40425527), -2.0773695, -2.0773695, 0, 0, Vector2(1, 0), -3.0226216, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_w48qg"]
+curve = SubResource("Curve_2iccn")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_hedi2"]
+lifetime_randomness = 0.31
+emission_shape = 1
+emission_sphere_radius = 0.31
+use_rotation_3d = true
+rotation_3d_min = Vector3(0, 0, 0)
+rotation_3d_max = Vector3(360, 360, 360)
+initial_velocity_min = 3.0
+initial_velocity_max = 10.0
+radial_velocity_min = -2.2351742e-05
+radial_velocity_max = 4.299978
+use_rotation_velocity_3d = true
+rotation_velocity_3d_min = Vector3(-180, -180, -180)
+rotation_velocity_3d_max = Vector3(180, 180, 180)
+scale_curve = SubResource("CurveTexture_w48qg")
+color = Color(1, 0, 0, 1)
+alpha_curve = SubResource("CurveTexture_rsoia")
+collision_mode = 1
+collision_friction = 0.04
+collision_bounce = 0.59
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2iccn"]
+transparency = 1
+shading_mode = 0
+diffuse_mode = 2
+specular_mode = 1
+vertex_color_use_as_albedo = true
+disable_receive_shadows = true
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_qo78n"]
+material = SubResource("StandardMaterial3D_2iccn")
+radius = 0.1
+height = 0.4
+radial_segments = 8
+rings = 2
+
+[node name="caveparticles" type="GPUParticles3D" unique_id=264002984]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
+cast_shadow = 0
+gi_mode = 0
+emitting = false
+amount = 1
+one_shot = true
+explosiveness = 1.0
+randomness = 1.0
+fixed_fps = 60
+collision_base_size = 0.1
+trail_lifetime = 3.49
+process_material = SubResource("ParticleProcessMaterial_hedi2")
+draw_pass_1 = SubResource("CapsuleMesh_qo78n")

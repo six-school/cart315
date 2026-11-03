@@ -1,17 +1,20 @@
 [gd_scene format=3 uid="uid://dw5lvogbl18cj"]
 
-[ext_resource type="Script" uid="uid://dvjnwyoko858f" path="res://main.gd" id="1_xkn7e"]
-[ext_resource type="FeluccaProject" uid="uid://2e7qbmax0y8y" path="res://music/test-song-1.felucca" id="2_lquwl"]
-[ext_resource type="FeluccaProject" uid="uid://kbf7b42vyd28" path="res://music/test-song-4.felucca" id="2_xkn7e"]
+[ext_resource type="Script" uid="uid://dvjnwyoko858f" path="res://scripts/main.gd" id="1_xkn7e"]
+[ext_resource type="Script" uid="uid://csibsk2fwsc0c" path="res://scripts/hall.gd" id="2_efxa6"]
+[ext_resource type="FeluccaProject" uid="uid://b4rddtqc7j6mb" path="res://music/hall-theme.felucca" id="2_kek77"]
 [ext_resource type="FeluccaProject" uid="uid://dqr5stjblexvq" path="res://music/test-song-2.felucca" id="3_1bvp3"]
 [ext_resource type="FeluccaProject" uid="uid://ba6n2ov2o2pco" path="res://music/test-song-3.felucca" id="3_7mycd"]
+[ext_resource type="PackedScene" uid="uid://bqad5fv1vtwn0" path="res://prefabs/hallparticles.tscn" id="3_efxa6"]
 [ext_resource type="Script" uid="uid://bbem0hhfflhv7" path="res://scripts/custom_distance_falloff.gd" id="3_kek77"]
-[ext_resource type="Script" uid="uid://d3ys01ijanw8l" path="res://fps_controller.gd" id="4_1bvp3"]
+[ext_resource type="Script" uid="uid://d3ys01ijanw8l" path="res://scripts/fps_controller.gd" id="4_1bvp3"]
 [ext_resource type="PackedScene" uid="uid://b0wmpnwjlvy2t" path="res://models/test-env.glb" id="5_lquwl"]
+[ext_resource type="Script" uid="uid://bobq2pk0ceke1" path="res://scripts/cave.gd" id="7_dg77c"]
 [ext_resource type="LightmapGIData" uid="uid://slk3v0xdja2j" path="res://models/main.lmbake" id="8_5vw27"]
+[ext_resource type="PackedScene" uid="uid://byfmv8kv0wb0j" path="res://prefabs/caveparticles.tscn" id="8_ycdy4"]
 
 [sub_resource type="Curve" id="Curve_f0702"]
-_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.66341466, 1), 0.0, 0.0, 0, 0, Vector2(0.83902436, 0.115151525), -2.2363615, -2.2363615, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.43658537, 1), 0.0, 0.0, 0, 0, Vector2(0.7243902, 0.123595595), -1.4998698, -1.4998698, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
 point_count = 4
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f0702"]
@@ -20,10 +23,71 @@ emission_enabled = true
 emission = Color(0.6706895, 0.6706895, 0.6706895, 1)
 disable_receive_shadows = true
 
+[sub_resource type="Curve" id="Curve_ycdy4"]
+_data = [Vector2(1e-05, 0), 0.0, 0.0, 0, 0, Vector2(0.10335195, 1), 0.0, 0.0, 0, 0, Vector2(0.9357542, 0.44680846), -1.410559, -1.410559, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 4
+
+[sub_resource type="CurveTexture" id="CurveTexture_dg77c"]
+curve = SubResource("Curve_ycdy4")
+
+[sub_resource type="Curve" id="Curve_dg77c"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.09217878, 1), 0.0, 0.0, 0, 0, Vector2(0.86592174, 0.91489357), 0.0, 0.0, 0, 0, Vector2(0.9385475, 0.73758864), -3.7577314, -3.7577314, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 5
+
+[sub_resource type="CurveTexture" id="CurveTexture_ycdy4"]
+curve = SubResource("Curve_dg77c")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_tg68e"]
+emission_shape = 1
+emission_sphere_radius = 0.57
+gravity = Vector3(0, 0.5, 0)
+scale_min = 1.1
+scale_max = 13.759999
+scale_curve = SubResource("CurveTexture_ycdy4")
+alpha_curve = SubResource("CurveTexture_dg77c")
+
+[sub_resource type="Gradient" id="Gradient_w48qg"]
+offsets = PackedFloat32Array(0, 0.7619048)
+colors = PackedColorArray(1, 1, 1, 0.7529412, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_vivmo"]
+gradient = SubResource("Gradient_w48qg")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.9, 0)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_w48qg"]
+transparency = 1
+blend_mode = 2
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_texture = SubResource("GradientTexture2D_vivmo")
+disable_receive_shadows = true
+billboard_mode = 3
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+particles_anim_loop = false
+
+[sub_resource type="QuadMesh" id="QuadMesh_hf1ok"]
+material = SubResource("StandardMaterial3D_w48qg")
+size = Vector2(2, 2)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tg68e"]
-albedo_color = Color(0, 0, 1, 1)
+transparency = 1
+albedo_color = Color(0.49019608, 0.67058825, 0.90588236, 0.29411766)
 emission_enabled = true
-emission = Color(0.5931336, 0.59313357, 0.59313357, 1)
+emission = Color(0.104890905, 0.104890905, 0.104890905, 1)
+disable_receive_shadows = true
+
+[sub_resource type="Curve" id="Curve_kek77"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -2.650506, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4c57u"]
+transparency = 1
+albedo_color = Color(0.8130378, 0.826229, 0.7146269, 0.8235294)
+emission_enabled = true
+emission = Color(0, 0.4781035, 0.48496673, 1)
 disable_receive_shadows = true
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lquwl"]
@@ -61,11 +125,16 @@ rings = 8
 [node name="Main" type="Node3D" unique_id=305689118]
 script = ExtResource("1_xkn7e")
 
-[node name="A" type="FeluccaSource3D" parent="." unique_id=1815355735]
-muted_parts = 14
-project = ExtResource("2_lquwl")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8601311, 6.5256453, -0.18230414)
-max_distance = 10.85
+[node name="hall" type="Node3D" parent="." unique_id=685746773]
+script = ExtResource("2_efxa6")
+fx = ExtResource("3_efxa6")
+
+[node name="Main Hall" type="FeluccaSource3D" parent="." unique_id=1815355735]
+muted_parts = 1
+project = ExtResource("2_kek77")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.2950933, 6.5256453, -0.18230414)
+autoplay = true
+max_distance = 13.01
 panning_strength = 0.4
 emission_angle_filter_attenuation_db = -57.8
 attenuation_filter_cutoff_hz = 5359.0
@@ -74,44 +143,101 @@ script = ExtResource("3_kek77")
 falloff = SubResource("Curve_f0702")
 ignore_y = true
 
-[node name="orb" type="CSGSphere3D" parent="A" unique_id=201911833]
+[node name="orb" type="CSGSphere3D" parent="Main Hall" unique_id=201911833]
+visible = false
 material = SubResource("StandardMaterial3D_f0702")
 
-[node name="A2" type="FeluccaSource3D" parent="." unique_id=400019640]
+[node name="caveparticlecolliders" type="Node3D" parent="." unique_id=1979709891]
+
+[node name="caveparticlecollider" type="GPUParticlesCollisionBox3D" parent="caveparticlecolliders" unique_id=2086304669]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.552193, 14.005352, -7.0050707)
+size = Vector3(13.810791, 2.9702454, 10.012554)
+
+[node name="caveparticlecollider7" type="GPUParticlesCollisionBox3D" parent="caveparticlecolliders" unique_id=1709985907]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.552193, 11.005352, -13.498793)
+size = Vector3(13.810791, 2.9702454, 3)
+
+[node name="caveparticlecollider8" type="GPUParticlesCollisionBox3D" parent="caveparticlecolliders" unique_id=1374291017]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.552193, 11.005352, -0.5113468)
+size = Vector3(13.810791, 2.9702454, 3)
+
+[node name="caveparticlecollider3" type="GPUParticlesCollisionBox3D" parent="caveparticlecolliders" unique_id=258222533]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.79139, 8.005352, -7.0050707)
+size = Vector3(6.2891846, 2.9702454, 10.012554)
+
+[node name="caveparticlecollider4" type="GPUParticlesCollisionBox3D" parent="caveparticlecolliders" unique_id=169502324]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.618599, 8.005352, -7.0050707)
+size = Vector3(5.9436035, 2.9702454, 10.012554)
+
+[node name="caveparticlecollider9" type="GPUParticlesCollisionBox3D" parent="caveparticlecolliders" unique_id=468223629]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.618599, 8.005352, -9.511348)
+size = Vector3(5.9436035, 2.9702454, 5)
+
+[node name="caveparticlecollider10" type="GPUParticlesCollisionBox3D" parent="caveparticlecolliders" unique_id=2103775564]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.618599, 8.005352, -2.5113478)
+size = Vector3(5.9436035, 2.9702454, 5)
+
+[node name="caveparticlecollider5" type="GPUParticlesCollisionBox3D" parent="caveparticlecolliders" unique_id=539548252]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.513077, 11.005352, -7.0050707)
+size = Vector3(3, 2.9702454, 10.012554)
+
+[node name="caveparticlecollider6" type="GPUParticlesCollisionBox3D" parent="caveparticlecolliders" unique_id=857169520]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.45668, 11.005352, -7.0050707)
+size = Vector3(3, 2.9702454, 10.012554)
+
+[node name="caveparticlecollider2" type="GPUParticlesCollisionBox3D" parent="caveparticlecolliders" unique_id=709976127]
+transform = Transform3D(0.7755968, 0.6312286, 0, -0.6312286, 0.7755968, 0, 0, 0, 1, -24.679903, 5.174161, -7.0050707)
+size = Vector3(8.330872, 2.9702454, 10.012554)
+
+[node name="Cave" type="FeluccaSource3D" parent="." unique_id=400019640]
 project = ExtResource("3_7mycd")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.256224, 11.412993, -7.0774574)
-max_distance = 7.0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.45005, 11.412993, -7.193061)
+unit_size = 58.22
+autoplay = true
+max_distance = 7.7
+script = ExtResource("7_dg77c")
+fx = ExtResource("8_ycdy4")
 
-[node name="orb" type="CSGSphere3D" parent="A2" unique_id=1669534559]
-material = SubResource("StandardMaterial3D_f0702")
+[node name="prim" type="GPUParticles3D" parent="Cave" unique_id=557533220]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01875496, -0.4753437, 0)
+lifetime = 1.5999999999999999
+process_material = SubResource("ParticleProcessMaterial_tg68e")
+draw_pass_1 = SubResource("QuadMesh_hf1ok")
 
-[node name="OmniLight3D2" type="OmniLight3D" parent="A2" unique_id=1570751842]
+[node name="light" type="OmniLight3D" parent="Cave" unique_id=1570751842]
 transform = Transform3D(0.9025457, 0.18504421, 0.38880575, 0.04148876, 0.8613793, -0.5062651, -0.42859063, 0.47305846, 0.769757, 0, 0, 0)
 light_color = Color(0.5773497, 0.06352342, 0.44517285, 1)
 shadow_enabled = true
 omni_range = 13.58311
 
-[node name="B" type="FeluccaSource3D" parent="." unique_id=724272638]
+[node name="Chamber" type="FeluccaSource3D" parent="." unique_id=724272638]
+muted_parts = 4
 project = ExtResource("3_1bvp3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.784021, 3.2281938, 2.6362565)
+autoplay = true
 max_distance = 7.0
 
-[node name="orb" type="CSGBox3D" parent="B" unique_id=939412987]
+[node name="prim" type="CSGBox3D" parent="Chamber" unique_id=939412987]
 transform = Transform3D(0.9025457, 0.18504423, 0.3888057, 0.04148876, 0.8613793, -0.50626516, -0.42859063, 0.47305846, 0.7697569, 0, 0, 0)
 material = SubResource("StandardMaterial3D_tg68e")
 
-[node name="OmniLight3D" type="OmniLight3D" parent="B/orb" unique_id=1710774955]
+[node name="light" type="OmniLight3D" parent="Chamber" unique_id=1710774955]
 light_color = Color(0, 0, 1, 1)
 shadow_enabled = true
 omni_range = 6.4654202
 
-[node name="B2" type="FeluccaSource3D" parent="." unique_id=2030326726]
-project = ExtResource("2_xkn7e")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.38911, 6.875376, 1.087256)
-max_distance = 7.0
+[node name="Sky" type="FeluccaSource3D" parent="." unique_id=2030326726]
+muted_parts = 6
+project = ExtResource("2_kek77")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.38911, 6.875376, 2.4716744)
+autoplay = true
+max_distance = 8.53
+script = ExtResource("3_kek77")
+falloff = SubResource("Curve_kek77")
+ignore_y = true
 
-[node name="orb" type="CSGSphere3D" parent="B2" unique_id=392159629]
-material = SubResource("StandardMaterial3D_tg68e")
+[node name="prim" type="CSGSphere3D" parent="Sky" unique_id=392159629]
+material = SubResource("StandardMaterial3D_4c57u")
 
 [node name="Lights" type="Node3D" parent="." unique_id=1833586539]
 
@@ -202,7 +328,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.695086, 9.983936, -2.31035
 mesh = SubResource("SphereMesh_f0702")
 
 [node name="Player" type="CharacterBody3D" parent="." unique_id=2037912429]
-transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -10.077653, 0.30673784, -0.050646067)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -10.077653, 0.18814832, -0.050646067)
 script = ExtResource("4_1bvp3")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=2103723222]

@@ -61,5 +61,6 @@ texture={
 
 [rendering]
 
+renderer/rendering_method="gl_compatibility"
 scaling_3d/mode=5
 scaling_3d/scale=0.5

@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://bio6r4ggf2ty4" path="res://models/test-env_rogland_clear_night_1k.png" id="2_nxpps"]
 
 [resource]
-render_priority = 0
+render_priority = 1
 shader = ExtResource("1_5broy")
 shader_parameter/panorama = ExtResource("2_nxpps")
 shader_parameter/energy = 1.0
