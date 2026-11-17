@@ -22,6 +22,7 @@ jobs:
           - { project: prototype_1_pong, engine: usagi }
           - { project: prototype_2_alt, engine: usagi }
           - { project: prototype_3, engine: godot }
+          - { project: prototype_4, engine: godot }
 
     steps:
       - uses: actions/checkout@v6

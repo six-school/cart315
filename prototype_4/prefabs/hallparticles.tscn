@@ -1,0 +1,65 @@
+[gd_scene format=3 uid="uid://bqad5fv1vtwn0"]
+
+[ext_resource type="Shader" uid="uid://3lpkptx5a058" path="res://models/sky.gdshader" id="1_1dq6p"]
+[ext_resource type="Texture2D" uid="uid://bio6r4ggf2ty4" path="res://models/test-env_rogland_clear_night_1k.png" id="2_kor3l"]
+
+[sub_resource type="Curve" id="Curve_efxa6"]
+_data = [Vector2(0, 0.042553186), 0.0, 0.0, 0, 0, Vector2(0.1424581, 0.97872335), 0.0, 0.0, 0, 0, Vector2(0.2653631, 0.8510638), 0.0, 0.0, 0, 0, Vector2(0.8184357, 0.62411344), -0.21762922, -0.21762922, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 5
+
+[sub_resource type="CurveTexture" id="CurveTexture_270jd"]
+curve = SubResource("Curve_efxa6")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_f0702"]
+lifetime_randomness = 0.09
+emission_shape = 6
+emission_ring_axis = Vector3(0, 0, 1)
+emission_ring_height = 0.27
+emission_ring_radius = 1.0
+emission_ring_inner_radius = 0.0
+emission_ring_cone_angle = 17.53
+use_rotation_3d = true
+rotation_3d_min = Vector3(0, 0, 0)
+rotation_3d_max = Vector3(360, 360, 360)
+gravity = Vector3(0, 0, 0)
+radial_accel_min = -2.2351742e-06
+radial_accel_max = 1.9999977
+scale_curve = SubResource("CurveTexture_270jd")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5broy"]
+transparency = 1
+blend_mode = 2
+shading_mode = 0
+diffuse_mode = 3
+specular_mode = 2
+disable_ambient_light = true
+disable_fog = true
+disable_specular_occlusion = true
+albedo_color = Color(0, 0.16533318, 0.62, 0.2509804)
+grow_amount = 4.611
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0sq6x"]
+render_priority = 1
+next_pass = SubResource("StandardMaterial3D_5broy")
+shader = ExtResource("1_1dq6p")
+shader_parameter/panorama = ExtResource("2_kor3l")
+shader_parameter/energy = 1.0
+shader_parameter/rotation_degrees = 0.0
+
+[sub_resource type="TorusMesh" id="TorusMesh_7ighy"]
+material = SubResource("ShaderMaterial_0sq6x")
+inner_radius = 0.003
+rings = 16
+ring_segments = 8
+
+[node name="hallparticles" type="GPUParticles3D" unique_id=264002984]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
+emitting = false
+amount = 3
+one_shot = true
+explosiveness = 1.0
+randomness = 1.0
+fixed_fps = 60
+trail_lifetime = 3.49
+process_material = SubResource("ParticleProcessMaterial_f0702")
+draw_pass_1 = SubResource("TorusMesh_7ighy")
