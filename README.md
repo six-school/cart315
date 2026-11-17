@@ -19,3 +19,7 @@
 [Prototype 3: Weird Apartment](prototype_3) ([Play online](https://six-school.github.io/cart315/prototype_3))
 
 [Journal 3: Weird Times](journal/3.md)
+
+[Prototype 4: Tenement 2](prototype_4) ([Play online](https://six-school.github.io/cart315/prototype_4))
+
+[Journal 4: Squeezed](journal/4.md)
