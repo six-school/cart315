@@ -4,7 +4,7 @@
 
 [Reading Reflection 2](readings/2.md)
 
-[Reading Reflection 2](readings/3.md)
+[Reading Reflection 3](readings/3.md)
 
 ---
 
